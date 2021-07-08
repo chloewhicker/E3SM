@@ -32,6 +32,12 @@ module PhenologyMod
   use VegetationType      , only : veg_pp
   use VegetationDataType  , only : veg_es, veg_ef, veg_cs, veg_cf, veg_ns, veg_nf
   use VegetationDataType  , only : veg_ps, veg_pf
+  use CNCarbonStateType   , only : carbonstate_type
+  use CNCarbonFluxType    , only : carbonflux_type
+  use CNNitrogenStateType , only : nitrogenstate_type
+  use CNNitrogenFluxType  , only : nitrogenflux_type
+  use PhosphorusStateType , only : phosphorusstate_type
+  use PhosphorusFluxType  , only : phosphorusflux_type
   !!!Added for gpu timing info
   use timeinfoMod
 
@@ -323,9 +329,7 @@ contains
 
    if (num_ppercropp > 0 ) then
       call CNPerennialCropHarvest(num_ppercropp, filter_ppercropp, &
-           num_soilc, filter_soilc, crop_vars, &
-           cnstate_vars, carbonstate_vars, carbonflux_vars, nitrogenstate_vars, &
-           nitrogenflux_vars, phosphorusstate_vars, phosphorusflux_vars)
+           num_soilc, filter_soilc, crop_vars, cnstate_vars)
    end if
 
     call CNOffsetLitterfall(num_soilp, filter_soilp, &
@@ -1937,8 +1941,8 @@ contains
     use clm_time_manager , only : get_curr_calday, get_days_per_year
     use pftvarcon        , only : gddmin, hybgdd
     use pftvarcon        , only : minplanttemp, planttemp, senestemp, min_days_senes
-    use clm_varcon       , only : spval, secspday
-    use clm_varctl       , only : iulog
+    use elm_varcon       , only : spval, secspday
+    use elm_varctl       , only : iulog
     !
     ! !ARGUMENTS:
     integer              , intent(in)    :: num_ppercropp       ! number of prog perennial crop patches in filter
@@ -1956,6 +1960,7 @@ contains
     real(r8) dayspyr  ! days per year
     real(r8) ndays_on ! number of days to fertilize
     real(r8):: soilt
+    real(r8):: dt
     !------------------------------------------------------------------------
 
     associate(                                                          &
@@ -2814,17 +2819,14 @@ contains
  end subroutine CNCropHarvest
 
 !----------------------------------------------------------------------
- subroutine CNPerennialCropHarvest (num_ppercropp, filter_ppercropp, num_soilc, filter_soilc, crop_vars, &
-            cnstate_vars, carbonstate_vars, carbonflux_vars, nitrogenstate_vars, nitrogenflux_vars, &
-            phosphorusstate_vars, phosphorusflux_vars)
+ subroutine CNPerennialCropHarvest (num_ppercropp, filter_ppercropp, num_soilc, filter_soilc, &
+            crop_vars, cnstate_vars)
    !
    ! !DESCRIPTION:
    ! This routine handles harvest for agriculture vegetation types, such as
    ! corn, soybean, and wheat. This routine allows harvest to be calculated
    ! instead of in the OffsetLitterfall subroutine. The harvest index is
    ! determined based on the LPJ model.
-   !
-   use clm_varctl       , only : iulog
    !
    ! !ARGUMENTS:
    integer, intent(in) :: num_ppercropp       ! number of prog perennial crop patches in filter
@@ -2834,12 +2836,6 @@ contains
 
     type(crop_type)         ,  intent(inout) :: crop_vars
     type(cnstate_type)      ,  intent(inout) :: cnstate_vars
-    type(carbonstate_type)  ,  intent(in)    :: carbonstate_vars
-    type(carbonflux_type)   ,  intent(inout) :: carbonflux_vars
-    type(nitrogenstate_type),  intent(in)    :: nitrogenstate_vars
-    type(nitrogenflux_type) ,  intent(inout) :: nitrogenflux_vars
-    type(phosphorusstate_type),intent(inout) :: phosphorusstate_vars
-    type(phosphorusflux_type), intent(inout) :: phosphorusflux_vars
    !
    ! !LOCAL VARIABLES:
    ! local pointers to implicit in scalars
@@ -2847,6 +2843,7 @@ contains
    integer :: fp                            ! lake filter pft index
    real(r8):: t1                            ! temporary variable
    real(r8):: cgrain                        ! amount of carbon in the grain
+   real(r8):: dt
    !-------------------------------------------------------------------------
    associate(&
    ivt                      => veg_pp%itype                     , & ! Input: [integer (:)]  pft vegetation type
@@ -2912,8 +2909,8 @@ contains
    ! gather all pft-level fluxes from harvest to the column
    ! for C and N inputs
 
-   call CNCropHarvestPftToColumn(num_soilc, filter_soilc, cnstate_vars, &
-                   carbonflux_vars, nitrogenflux_vars, phosphorusflux_vars)
+   call CNCropHarvestPftToColumn(num_soilc, filter_soilc, cnstate_vars)
+
     end associate
  end subroutine CNPerennialCropHarvest
 
