@@ -117,6 +117,8 @@ if ! shopt -oq posix; then
 fi
 
 #--------------------------------------------------------------------
+# the following are likely required for E3SM Land Model (ELM) settings
+# 
 export PATH=~/.local/bin:$PATH 
 
 # user-defined
