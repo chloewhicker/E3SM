@@ -18,7 +18,7 @@ module ColumnDataType
   use elm_varpar      , only : nlevdecomp_full, crop_prog, nlevdecomp
   use elm_varpar      , only : i_met_lit, i_cel_lit, i_lig_lit, i_cwd
   use elm_varcon      , only : spval, ispval, zlnd, snw_rds_min, denice, denh2o, tfrz, pondmx
-  use elm_varcon      , only : watmin, bdsno, zsoi, zisoi, dzsoi_decomp
+  use elm_varcon      , only : watmin, bdsno, bdfirn, zsoi, zisoi, dzsoi_decomp
   use elm_varcon      , only : c13ratio, c14ratio, secspday
   use elm_varctl      , only : use_fates, use_fates_planthydro, create_glacier_mec_landunit
   use elm_varctl      , only : use_hydrstress
@@ -28,6 +28,7 @@ module ColumnDataType
   use elm_varctl      , only : hist_wrtch4diag, use_century_decomp
   use elm_varctl      , only : get_carbontag, override_bgc_restart_mismatch_dump
   use elm_varctl      , only : pf_hmode, nu_com
+  use elm_varctl      , only : use_extrasnowlayers
   use ch4varcon       , only : allowlakeprod
   use pftvarcon       , only : VMAX_MINSURF_P_vr, KM_MINSURF_P_vr, pinit_beta1, pinit_beta2
   use soilorder_varcon, only : smax, ks_sorption
@@ -1681,8 +1682,20 @@ contains
           end do
           do j = -nlevsno+1, 0
              if (j > col_pp%snl(c)) then
-                this%h2osoi_ice(c,j) = col_pp%dz(c,j)*250._r8
-                this%h2osoi_liq(c,j) = 0._r8
+                 if (use_extrasnowlayers) then 
+                   ! amschnei@uci.edu: Initialize "deep firn" on glacier columns
+                   if (lun_pp%itype(l) == istice .or. lun_pp%itype(l) == istice_mec) then
+                     this%h2osoi_ice(c,j) = col_pp%dz(c,j)*bdfirn
+                     this%h2osoi_liq(c,j) = 0._r8
+                   else
+                     this%h2osoi_ice(c,j) = col_pp%dz(c,j)*bdsno
+                     this%h2osoi_liq(c,j) = 0._r8
+                   end if
+                 else ! no firn model (default in v2)
+                      ! Below, "250._r8" should instead be "bdsno", which is 250 kg m^3 by default
+                   this%h2osoi_ice(c,j) = col_pp%dz(c,j)*250._r8
+                   this%h2osoi_liq(c,j) = 0._r8
+                 end if
              end if
           end do
        end if
