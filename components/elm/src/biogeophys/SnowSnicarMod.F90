@@ -1827,27 +1827,31 @@ contains
      !
      ! variables for snow radiative transfer calculations
 
+     ! +CAW 
+      integer :: &
+         nlevice = 15  ! number of glacier ice layers           
+
      ! Local variables representing single-column values of arrays:
-     integer :: snl_lcl                            ! negative number of snow layers [nbr]
-     integer :: snw_rds_lcl(-nlevsno+1:0)          ! snow effective radius [m^-6]
-     real(r8):: flx_slrd_lcl(1:numrad_snw)         ! direct beam incident irradiance [W/m2] (set to 1)
-     real(r8):: flx_slri_lcl(1:numrad_snw)         ! diffuse incident irradiance [W/m2] (set to 1)
-     real(r8):: mss_cnc_aer_lcl(-nlevsno+1:0,1:sno_nbr_aer) ! aerosol mass concentration (lyr,aer_nbr) [kg/kg]
-     real(r8):: h2osno_lcl                         ! total column snow mass [kg/m2]
-     real(r8):: h2osno_liq_lcl(-nlevsno+1:0)       ! liquid water mass [kg/m2]
-     real(r8):: h2osno_ice_lcl(-nlevsno+1:0)       ! ice mass [kg/m2]
-     real(r8):: albsfc_lcl(1:numrad_snw)           ! albedo of underlying surface [frc]
-     real(r8):: ss_alb_snw_lcl(-nlevsno+1:0)       ! single-scatter albedo of ice grains (lyr) [frc]
-     real(r8):: asm_prm_snw_lcl(-nlevsno+1:0)      ! asymmetry parameter of ice grains (lyr) [frc]
-     real(r8):: ext_cff_mss_snw_lcl(-nlevsno+1:0)  ! mass extinction coefficient of ice grains (lyr) [m2/kg]
-     real(r8):: ss_alb_aer_lcl(sno_nbr_aer)        ! single-scatter albedo of aerosol species (aer_nbr) [frc]
-     real(r8):: asm_prm_aer_lcl(sno_nbr_aer)       ! asymmetry parameter of aerosol species (aer_nbr) [frc]
-     real(r8):: ext_cff_mss_aer_lcl(sno_nbr_aer)   ! mass extinction coefficient of aerosol species (aer_nbr) [m2/kg]
+     integer :: snl_lcl                                  ! negative number of snow layers [nbr]
+     integer :: snw_rds_lcl(-nlevsno+1:nlevice)          ! snow effective radius [m^-6]
+     real(r8):: flx_slrd_lcl(1:numrad_snw)               ! direct beam incident irradiance [W/m2] (set to 1)
+     real(r8):: flx_slri_lcl(1:numrad_snw)               ! diffuse incident irradiance [W/m2] (set to 1)
+     real(r8):: mss_cnc_aer_lcl(-nlevsno+1:nlevice,1:sno_nbr_aer) ! aerosol mass concentration (lyr,aer_nbr) [kg/kg]
+     real(r8):: h2osno_lcl                               ! total column snow mass [kg/m2]
+     real(r8):: h2osno_liq_lcl(-nlevsno+1:nlevice)       ! liquid water mass [kg/m2]
+     real(r8):: h2osno_ice_lcl(-nlevsno+1:nlevice)       ! ice mass [kg/m2]
+     real(r8):: albsfc_lcl(1:numrad_snw)                 ! albedo of underlying surface [frc]
+     real(r8):: ss_alb_snw_lcl(-nlevsno+1:nlevice)       ! single-scatter albedo of ice grains (lyr) [frc]
+     real(r8):: asm_prm_snw_lcl(-nlevsno+1:nlevice)      ! asymmetry parameter of ice grains (lyr) [frc]
+     real(r8):: ext_cff_mss_snw_lcl(-nlevsno+1:nlevice)  ! mass extinction coefficient of ice grains (lyr) [m2/kg]
+     real(r8):: ss_alb_aer_lcl(sno_nbr_aer)              ! single-scatter albedo of aerosol species (aer_nbr) [frc]
+     real(r8):: asm_prm_aer_lcl(sno_nbr_aer)             ! asymmetry parameter of aerosol species (aer_nbr) [frc]
+     real(r8):: ext_cff_mss_aer_lcl(sno_nbr_aer)         ! mass extinction coefficient of aerosol species (aer_nbr) [m2/kg]
 
 #ifdef MODAL_AER
      !mgf++
-     real(r8) :: rds_bcint_lcl(-nlevsno+1:0)       ! effective radius of within-ice BC [nm]
-     real(r8) :: rds_bcext_lcl(-nlevsno+1:0)       ! effective radius of external BC [nm]
+     real(r8) :: rds_bcint_lcl(-nlevsno+1:nlevice)       ! effective radius of within-ice BC [nm]
+     real(r8) :: rds_bcext_lcl(-nlevsno+1:nlevice)       ! effective radius of external BC [nm]
      !mgf--
 #endif
 
@@ -1865,25 +1869,25 @@ contains
      real(r8):: albedo                             ! temporary snow albedo [frc]
      real(r8):: flx_sum                            ! temporary summation variable for NIR weighting
      real(r8):: albout_lcl(numrad_snw)             ! snow albedo by band [frc]
-     real(r8):: flx_abs_lcl(-nlevsno+1:1,numrad_snw)! absorbed flux per unit incident flux at top of snowpack (lyr,bnd) [frc]
+     real(r8):: flx_abs_lcl(-nlevsno+1:nlevice,numrad_snw)! absorbed flux per unit incident flux at top of snowpack (lyr,bnd) [frc]
 
-     real(r8):: L_snw(-nlevsno+1:0)                ! h2o mass (liquid+solid) in snow layer (lyr) [kg/m2]
-     real(r8):: tau_snw(-nlevsno+1:0)              ! snow optical depth (lyr) [unitless]
-     real(r8):: L_aer(-nlevsno+1:0,sno_nbr_aer)    ! aerosol mass in snow layer (lyr,nbr_aer) [kg/m2]
-     real(r8):: tau_aer(-nlevsno+1:0,sno_nbr_aer)  ! aerosol optical depth (lyr,nbr_aer) [unitless]
-     real(r8):: tau_sum                            ! cumulative (snow+aerosol) optical depth [unitless]
-     real(r8):: tau_elm(-nlevsno+1:0)              ! column optical depth from layer bottom to snowpack top (lyr) [unitless]
-     real(r8):: omega_sum                          ! temporary summation of single-scatter albedo of all aerosols [frc]
-     real(r8):: g_sum                              ! temporary summation of asymmetry parameter of all aerosols [frc]
+     real(r8):: L_snw(-nlevsno+1:nlevice)                ! h2o mass (liquid+solid) in snow layer (lyr) [kg/m2]
+     real(r8):: tau_snw(-nlevsno+1:nlevice)              ! snow optical depth (lyr) [unitless]
+     real(r8):: L_aer(-nlevsno+1:nlevice,sno_nbr_aer)    ! aerosol mass in snow layer (lyr,nbr_aer) [kg/m2]
+     real(r8):: tau_aer(-nlevsno+1:nlevice,sno_nbr_aer)  ! aerosol optical depth (lyr,nbr_aer) [unitless]
+     real(r8):: tau_sum                                  ! cumulative (snow+aerosol) optical depth [unitless]
+     real(r8):: tau_elm(-nlevsno+1:nlevice)              ! column optical depth from layer bottom to snowpack top (lyr) [unitless]
+     real(r8):: omega_sum                                ! temporary summation of single-scatter albedo of all aerosols [frc]
+     real(r8):: g_sum                                    ! temporary summation of asymmetry parameter of all aerosols [frc]
 
-     real(r8):: tau(-nlevsno+1:0)                  ! weighted optical depth of snow+aerosol layer (lyr) [unitless]
-     real(r8):: omega(-nlevsno+1:0)                ! weighted single-scatter albedo of snow+aerosol layer (lyr) [frc]
-     real(r8):: g(-nlevsno+1:0)                    ! weighted asymmetry parameter of snow+aerosol layer (lyr) [frc]
-     real(r8):: tau_star(-nlevsno+1:0)             ! transformed (i.e. Delta-Eddington) optical depth of snow+aerosol layer
-                                                   ! (lyr) [unitless]
-     real(r8):: omega_star(-nlevsno+1:0)           ! transformed (i.e. Delta-Eddington) SSA of snow+aerosol layer (lyr) [frc]
-     real(r8):: g_star(-nlevsno+1:0)               ! transformed (i.e. Delta-Eddington) asymmetry paramater of snow+aerosol layer
-                                                   ! (lyr) [frc]
+     real(r8):: tau(-nlevsno+1:nlevice)                  ! weighted optical depth of snow+aerosol layer (lyr) [unitless]
+     real(r8):: omega(-nlevsno+1:nlevice)                ! weighted single-scatter albedo of snow+aerosol layer (lyr) [frc]
+     real(r8):: g(-nlevsno+1:nlevice)                    ! weighted asymmetry parameter of snow+aerosol layer (lyr) [frc]
+     real(r8):: tau_star(-nlevsno+1:nlevice)             ! transformed (i.e. Delta-Eddington) optical depth of snow+aerosol layer
+                                                         ! (lyr) [unitless]
+     real(r8):: omega_star(-nlevsno+1:nlevice)           ! transformed (i.e. Delta-Eddington) SSA of snow+aerosol layer (lyr) [frc]
+     real(r8):: g_star(-nlevsno+1:nlevice)               ! transformed (i.e. Delta-Eddington) asymmetry paramater of snow+aerosol layer
+                                                         ! (lyr) [frc]
 
      integer :: nstep                              ! current timestep [nbr] (debugging only)
      integer :: g_idx, c_idx, l_idx                ! gridcell, column, and landunit indices [idx]
@@ -1898,7 +1902,7 @@ contains
      integer :: m                                  ! secondary layer index [idx]
      integer :: nint_snw_rds_min                   ! nearest integer value of snw_rds_min
 
-     real(r8):: F_abs(-nlevsno+1:0)                ! net absorbed radiative energy (lyr) [W/m^2]
+     real(r8):: F_abs(-nlevsno+1:nlevice)          ! net absorbed radiative energy (lyr) [W/m^2]
      real(r8):: F_abs_sum                          ! total absorbed energy in column [W/m^2]
      real(r8):: F_sfc_pls                          ! upward radiative flux at snowpack top [W/m^2]
      real(r8):: F_btm_net                          ! net flux at bottom of snowpack [W/m^2]
@@ -1942,24 +1946,24 @@ contains
 
      ! SNICAR_AD new variables, follow sea-ice shortwave conventions
      real(r8):: &
-        trndir(-nlevsno+1:1)  , & ! solar beam down transmission from top
-        trntdr(-nlevsno+1:1)  , & ! total transmission to direct beam for layers above
-        trndif(-nlevsno+1:1)  , & ! diffuse transmission to diffuse beam for layers above
-        rupdir(-nlevsno+1:1)  , & ! reflectivity to direct radiation for layers below
-        rupdif(-nlevsno+1:1)  , & ! reflectivity to diffuse radiation for layers below
-        rdndif(-nlevsno+1:1)  , & ! reflectivity to diffuse radiation for layers above
-        dfdir(-nlevsno+1:1)   , & ! down-up flux at interface due to direct beam at top surface
-        dfdif(-nlevsno+1:1)   , & ! down-up flux at interface due to diffuse beam at top surface
-        dftmp(-nlevsno+1:1)       ! temporary variable for down-up flux at interface
+        trndir(-nlevsno+1:nlevice)  , & ! solar beam down transmission from top
+        trntdr(-nlevsno+1:nlevice)  , & ! total transmission to direct beam for layers above
+        trndif(-nlevsno+1:nlevice)  , & ! diffuse transmission to diffuse beam for layers above
+        rupdir(-nlevsno+1:nlevice)  , & ! reflectivity to direct radiation for layers below
+        rupdif(-nlevsno+1:nlevice)  , & ! reflectivity to diffuse radiation for layers below
+        rdndif(-nlevsno+1:nlevice)  , & ! reflectivity to diffuse radiation for layers above
+        dfdir(-nlevsno+1:nlevice)   , & ! down-up flux at interface due to direct beam at top surface
+        dfdif(-nlevsno+1:nlevice)   , & ! down-up flux at interface due to diffuse beam at top surface
+        dftmp(-nlevsno+1:nlevice)       ! temporary variable for down-up flux at interface
 
      real(r8):: &
-        rdir(-nlevsno+1:0)       , & ! layer reflectivity to direct radiation
-        rdif_a(-nlevsno+1:0)     , & ! layer reflectivity to diffuse radiation from above
-        rdif_b(-nlevsno+1:0)     , & ! layer reflectivity to diffuse radiation from below
-        tdir(-nlevsno+1:0)       , & ! layer transmission to direct radiation (solar beam + diffuse)
-        tdif_a(-nlevsno+1:0)     , & ! layer transmission to diffuse radiation from above
-        tdif_b(-nlevsno+1:0)     , & ! layer transmission to diffuse radiation from below
-        trnlay(-nlevsno+1:0)         ! solar beam transm for layer (direct beam only)
+        rdir(-nlevsno+1:nlevice)       , & ! layer reflectivity to direct radiation
+        rdif_a(-nlevsno+1:nlevice)     , & ! layer reflectivity to diffuse radiation from above
+        rdif_b(-nlevsno+1:nlevice)     , & ! layer reflectivity to diffuse radiation from below
+        tdir(-nlevsno+1:nlevice)       , & ! layer transmission to direct radiation (solar beam + diffuse)
+        tdif_a(-nlevsno+1:nlevice)     , & ! layer transmission to diffuse radiation from above
+        tdif_b(-nlevsno+1:nlevice)     , & ! layer transmission to diffuse radiation from below
+        trnlay(-nlevsno+1:nlevice)         ! solar beam transm for layer (direct beam only)
 
      real(r8):: &
          ts       , & ! layer delta-scaled extinction optical depth
@@ -2244,6 +2248,13 @@ contains
                 sfctype   = lun_pp%itype(l_idx)
                 lat_coord = grc_pp%latdeg(g_idx)
                 lon_coord = grc_pp%londeg(g_idx)
+
+
+                ! +CAW 
+                if (lun_pp%itype(l_idx) == istice .or. lun_pp%itype(l_idx) == istice_mec)  then  ! land ice
+                        snl_btm   = nlevice
+                        write(iulog,*) "landunit type", lun_pp%itype(l_idx)
+                endif
 
 
                 ! Set variables specific to CSIM
