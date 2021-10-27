@@ -669,6 +669,8 @@ contains
                       ddz1 = -c3*dexpf 
                       if (bi > dm) ddz1 = ddz1*exp(-46.0e-3_r8*(bi-dm))
                    else
+                      ! amschnei@uci.edu: additional compaction term for new snow viscosity
+                      !                   from Lehning et al. (2002), eq. (36)
                       ddz1_fresh = (-grav * (burden(c) + wx/2._r8)) / &
                                    (0.007_r8 * bi**(4.75_r8 + td/40._r8))
                       snw_ssa = 3.e6_r8 / (denice * snw_rds(c,j))
@@ -688,6 +690,8 @@ contains
                    if (.not. use_firn_percolation_and_compaction) then
                       ddz2 = -(burden(c)+wx/2._r8)*exp(-0.08_r8*td - c2*bi)/eta0 
                    else
+                      ! amschnei@uci.edu: Semi-empirical compaction
+                      !                   from Arthern et al. (2010), eq. (B1)
                       p_gls = max(denice / bi, 1._r8) * grav * (burden(c) + wx/2._r8)
                       if (bi <= 550._r8) then ! Low density, i.e. snow
                          ddz2 = (-k_creep_snow * (max(denice / bi, 1._r8) - 1._r8) * &
