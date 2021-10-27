@@ -571,14 +571,14 @@ contains
      ! parameters
      real(r8), parameter :: c2 = 23.e-3_r8       ! [m3/kg]
      real(r8), parameter :: c3 = 2.777e-6_r8     ! [1/s]
-     real(r8), parameter :: c3_ams = 5.8e-7_r8   ! Schneider et al., 2020 [1/s]
+     real(r8), parameter :: c3_ams = 0.83e-6_r8   ! Schneider et al. (2021), Table 2 [1/s]
      real(r8), parameter :: c4 = 0.04_r8         ! [1/K]
      real(r8), parameter :: c5 = 2.0_r8          !
      real(r8), parameter :: dm = 100.0_r8        ! Upper Limit on Destructive Metamorphism Compaction [kg/m3]
-     real(r8), parameter :: rho_dm = 150.0_r8    ! Upper limit on destructive metamorphism compaction [kg/m3] (Anderson, 1976; Schneider et al., 2020)
+     real(r8), parameter :: rho_dm = 150.0_r8    ! Upper limit on destructive metamorphism compaction [kg/m3] (Anderson, 1976; Schneider et al., 2021)
      real(r8), parameter :: eta0 = 9.e+5_r8      ! The Viscosity Coefficient Eta0 [kg-s/m2]
-     real(r8), parameter :: k_creep_snow = 1.4e-9_r8 ! Creep coefficient for snow (bi < 550 kg / m3) [m3-s/kg]
-     real(r8), parameter :: k_creep_firn = 1.2e-9_r8 ! Creep coefficient for firn (bi > 550 kg / m3)
+     real(r8), parameter :: k_creep_snow = 9.2e-9_r8 ! Creep coefficient for snow (bi < 550 kg / m3) [m3-s/kg]
+     real(r8), parameter :: k_creep_firn = 3.7e-9_r8 ! Creep coefficient for firn (bi > 550 kg / m3) [m3-s/kg]
      !
      real(r8) :: p_gls                           ! grain load stress [kg / m-s2]
      real(r8) :: burden(bounds%begc:bounds%endc) ! pressure of overlying snow [kg/m2]
@@ -669,6 +669,8 @@ contains
                       ddz1 = -c3*dexpf 
                       if (bi > dm) ddz1 = ddz1*exp(-46.0e-3_r8*(bi-dm))
                    else
+                      ! amschnei@uci.edu: additional compaction term for new snow viscosity
+                      !                   from Lehning et al. (2002), eq. (36)
                       ddz1_fresh = (-grav * (burden(c) + wx/2._r8)) / &
                                    (0.007_r8 * bi**(4.75_r8 + td/40._r8))
                       snw_ssa = 3.e6_r8 / (denice * snw_rds(c,j))
@@ -688,17 +690,19 @@ contains
                    if (.not. use_extrasnowlayers) then
                       ddz2 = -(burden(c)+wx/2._r8)*exp(-0.08_r8*td - c2*bi)/eta0 
                    else
+                      ! amschnei@uci.edu: Semi-empirical compaction
+                      !                   from Arthern et al. (2010), eq. (B1)
                       p_gls = max(denice / bi, 1._r8) * grav * (burden(c) + wx/2._r8)
                       if (bi <= 550._r8) then ! Low density, i.e. snow
                          ddz2 = (-k_creep_snow * (max(denice / bi, 1._r8) - 1._r8) * &
                                  exp(-60.e6_r8 / (rgas * t_soisno(c,j))) * p_gls) / &
                                  (snw_rds(c,j) * 1.e-6_r8 * snw_rds(c,j) * 1.e-6_r8) - &
-                                 2.02e-10_r8
+                                 1.0e-10_r8 ! small additional constant
                       else ! High density, i.e. firn
                          ddz2 = (-k_creep_firn * (max(denice / bi, 1._r8) - 1._r8) * &
                                  exp(-60.e6_r8 / (rgas * t_soisno(c,j))) * p_gls) / &
                                  (snw_rds(c,j) * 1.e-6_r8 * snw_rds(c,j) * 1.e-6_r8) - &
-                                 2.7e-11_r8
+                                 1.0e-11_r8 ! smaller additional constant
                       endif
                    endif
 
