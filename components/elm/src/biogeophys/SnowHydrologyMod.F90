@@ -702,7 +702,7 @@ contains
                          ddz2 = (-k_creep_firn * (max(denice / bi, 1._r8) - 1._r8) * &
                                  exp(-60.e6_r8 / (rgas * t_soisno(c,j))) * p_gls) / &
                                  (snw_rds(c,j) * 1.e-6_r8 * snw_rds(c,j) * 1.e-6_r8) - &
-                                 1.0e-11_r8 ! smaller additional constant
+                                 1.0e-10_r8 ! small additional constant
                       endif
                    endif
 
