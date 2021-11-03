@@ -1835,6 +1835,7 @@ contains
 
 
      integer,  parameter :: nlevice = 15                 ! +CAW 
+    ! logical,  public, parameter :: use_iceRT = .true.   ! +CAW - used for testing rn 
 
      ! Local variables representing single-column values of arrays:
      integer :: snl_lcl                                  ! negative number of snow layers [nbr]
@@ -1853,8 +1854,7 @@ contains
      real(r8):: asm_prm_aer_lcl(sno_nbr_aer)             ! asymmetry parameter of aerosol species (aer_nbr) [frc]
      real(r8):: ext_cff_mss_aer_lcl(sno_nbr_aer)         ! mass extinction coefficient of aerosol species (aer_nbr) [m2/kg]
      real(r8):: sca_cff_vlm_airbbl_lcl(-nlevsno+1:nlevice)! single-scatter albedo of air bbls (lyr) [frc] ! +CAW
-     real(r8):: asm_prm_snw_lcl(-nlevsno+1:nlevice)       ! +CAW
-     real(r8):: asm_prm_airbbl(-nlevsno+1:nlevice)        ! +CAW
+     !real(r8):: asm_prm_airbbl_lcl(-nlevsno+1:nlevice)        ! +CAW
      real(r8):: abs_cff_mss_ice_lcl(-nlevsno+1:nlevice)   ! +CAW
      real(r8):: vlm_frac_air(-nlevsno+1:nlevice)          ! +CAW
      real(r8):: abs_cff_mss_ice(1:numrad_snw)             ! +CAW
@@ -1992,7 +1992,8 @@ contains
          refkp1   , & ! interface multiple scattering for k+1
          refkm1   , & ! interface multiple scattering for k-1
          tdrrdir  , & ! direct tran times layer direct ref
-         tdndif       ! total down diffuse = tot tran - direct tran
+         tdndif   , &  ! total down diffuse = tot tran - direct tran
+         rintfc       ! reflection (multiple) at an interface +CAW
 
      real(r8) :: &
          alpha    , & ! term in direct reflectivity and transmissivity
@@ -2005,7 +2006,8 @@ contains
          n        , & ! term in diffuse reflectivity and transmissivity
          lm       , & ! temporary for el
          mu       , & ! cosine solar zenith for either snow or water
-         ne           ! temporary for n
+         ne       , &  ! temporary for n
+         mu0n         ! cosine solar zenith angle in ice medium in FL +CAW 
 
      ! perpendicular and parallel relative to plane of incidence and scattering
      real(r8) :: &
@@ -2035,6 +2037,13 @@ contains
          snl_btm_itf    , & ! index of bottom snow layer interfaces (1) [idx]
          ngmax = 8          ! gaussian integration index
 
+     !+CAW parameters for FL - start
+     real(r8), parameter :: &
+         refindx = 1.310_r8 , & ! refractive index of sea ice (water also)
+         cp063   = 0.063_r8 , & ! diffuse fresnel reflectivity from above
+         cp455   = 0.455_r8      ! diffuse fresnel reflectivity from below
+     !+CAW parameters for FL - end
+
      ! Gaussian integration angle and coefficients
      real(r8) :: &
          difgauspt(1:8)  , &
@@ -2055,6 +2064,7 @@ contains
      real(r8) :: &
          c0      = 0.0_r8     , &
          c1      = 1.0_r8     , &
+         c2      = 2.0_r8     , & !+CAW
          c3      = 3.0_r8     , &
          c4      = 4.0_r8     , &
          c6      = 6.0_r8     , &
@@ -2221,6 +2231,7 @@ contains
        do fc = 1,num_nourbanc
           c_idx = filter_nourbanc(fc)
 
+
           ! Zero absorbed radiative fluxes:
           do i=-nlevsno+1,nlevice,1 !+CAW - extend total # of layers
              flx_abs_lcl(:,:)   = 0._r8
@@ -2269,13 +2280,12 @@ contains
                 lat_coord = grc_pp%latdeg(g_idx)
                 lon_coord = grc_pp%londeg(g_idx)
                
-                write(iulog,*) " +CAW lun_pp%itype(l_idx)", lun_pp%itype(l_idx)
-               write(iulog,*) " +CAW sfctype",sfctype 
 
                 ! +CAW - start
                 if (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4)  then  ! land ice
                         snl_btm   = nlevice
                         kfrsnl = 1 ! layer 1 is always going to be the first ice layer
+                        mu0n = sqrt(c1-((c1-mu0**2)/(refindx*refindx)))
                         write(iulog,*) "CAW kfrsnl = ", kfrsnl
                         !write(iulog,*) " +CAW landunit type", lun_pp%itype(l_idx)
                 endif
@@ -2438,7 +2448,7 @@ contains
                    !  retrieved from a lookup table.
                    if (flg_slr_in == 1) then
                       do i=snl_top,snl_btm,1
-                         if (i>kfrsnl) then ! +CAW
+                         if (i<kfrsnl) then ! +CAW
                             lyr_typ(i) = 1 ! +CAW indicates an ice layer 
                             rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1
                             ! snow optical properties (direct radiation)
@@ -2451,7 +2461,7 @@ contains
                             ! ice optical properties (direct radiation)
                             sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW 
                             asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
-                            abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW 
+                            abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
                             vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW 
                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
@@ -2468,7 +2478,7 @@ contains
                              ss_alb_snw_lcl(i)      = ss_alb_snw_dfs(rds_idx,bnd_idx)
                              asm_prm_snw_lcl(i)     = asm_prm_snw_dfs(rds_idx,bnd_idx)
                              ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_dfs(rds_idx,bnd_idx)
-                     else 
+                         else 
                              lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                              rds_idx = 10 ! TEMP                 ! +CAW
                              ! ice optical properties (direct radiation)
@@ -2479,7 +2489,7 @@ contains
                              ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
                              ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
                              write(iulog,*) "CAW ice layer diffuse "
-
+                         endif
                       enddo
                    endif
 				   
@@ -2849,6 +2859,68 @@ contains
                         ! homogeneous layer
                         rdif_b(i) = rdif_a(i)
                         tdif_b(i) = tdif_a(i)
+
+                        ! +CAW Fresnel Code -- start 
+                        if( i == kfrsnl ) then
+                                ! compute fresnel reflection and transmission
+                                ! amplitudes for two polarizations: 1=perpendicular
+                                ! and 2=parallel to he plane containing incident,
+                                ! reflected and refracted rays.
+                                R1 = (mu0 - refindx*mu0n) / &
+                                     (mu0 + refindx*mu0n)
+                                R2 = (refindx*mu0 - mu0n) / &
+                                     (refindx*mu0 + mu0n)
+                                T1 = c2*mu0 / &
+                                     (mu0 + refindx*mu0n)
+                                T2 = c2*mu0 / &
+                                     (refindx*mu0 + mu0n)
+
+                              ! unpolarized light for direct beam
+                              Rf_dir_a = cp5 * (R1*R1 + R2*R2)
+                              Tf_dir_a = cp5 * (T1*T1 + T2*T2)*refindx*mu0n/mu0
+
+                              ! precalculated diffuse reflectivities and
+                              ! transmissivities for incident radiation above and
+                              ! below fresnel layer, using the direct albedos and
+                              ! accounting for complete internal reflection from
+                              ! below; precalculated because high order number of
+                              ! gaussian points (~256) is required for convergence:
+                              
+                              ! above
+                              Rf_dif_a = cp063
+                              Tf_dif_a = c1 - Rf_dif_a
+                              ! below
+                              Rf_dif_b = cp455
+                              Tf_dif_b = c1 - Rf_dif_b
+
+
+                              ! the i = kfrsnl layer properties are updated to
+                              ! combined the fresnel (refractive) layer, always
+                              ! taken to be above he present layer i (i.e. be the
+                              ! top interface):
+                              rintfc   = c1 / (c1-Rf_dif_b*rdif_a(i))
+                              tdir(i)   = Tf_dir_a*tdir(i) + &
+                                   Tf_dir_a*rdir(i) * &
+                                   Rf_dif_b*rintfc*tdif_a(i)
+                              rdir(i)   = Rf_dir_a + &
+                                   Tf_dir_a*rdir(i) * &
+                                   rintfc*Tf_dif_b
+                              rdif_a(i) = Rf_dif_a + &
+                                   Tf_dif_a*rdif_a(i) * &
+                                   rintfc*Tf_dif_b
+                              rdif_b(i) = rdif_b(i) + &
+                                   tdif_b(i)*Rf_dif_b * &
+                                   rintfc*tdif_a(i)
+                              tdif_a(i) = tdif_a(i)*rintfc*Tf_dif_a
+                              tdif_b(i) = tdif_b(i)*rintfc*Tf_dif_b
+
+                              ! update trnlay to include fresnel transmission
+                              trnlay(i) = Tf_dir_a*trnlay(i)
+                              write(iulog,*) "CAW CHECK FL code ran FL is:", kfrsnl
+
+                        endif      ! i = kfrsnl
+                        ! +CAW Fresnel code - end
+
 
                       endif ! trntdr(k) > trmin
 
