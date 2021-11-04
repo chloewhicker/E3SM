@@ -1554,8 +1554,8 @@ contains
       call ncd_io( 'asm_prm_ice_drc',asm_prm_snw_drc,          'read', ncid, posNOTonfile=.true.)
       call ncd_io( 'ext_cff_mss_ice_drc', ext_cff_mss_snw_drc, 'read', ncid, posNOTonfile=.true.)
       
-      call ncd_io('sca_cff_vlm_airbbl', sca_cff_vlm_airbbl,    'read', ncid, posNOTonfile=.true.)! +CAW
-      call ncd_io('asm_prm_airbbl', asm_prm_airbbl,            'read', ncid, posNOTonfile=.true.)! +CAW
+      !call ncd_io('sca_cff_vlm_airbbl', sca_cff_vlm_airbbl,    'read', ncid, posNOTonfile=.true.)! +CAW
+      !call ncd_io('asm_prm_airbbl', asm_prm_airbbl,            'read', ncid, posNOTonfile=.true.)! +CAW
 
 
       ! diffuse snow Mie parameters
@@ -2283,11 +2283,15 @@ contains
 
                 ! +CAW - start
                 if (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4)  then  ! land ice
-                        snl_btm   = nlevice
-                        kfrsnl = 1 ! layer 1 is always going to be the first ice layer
-                        mu0n = sqrt(c1-((c1-mu0**2)/(refindx*refindx)))
+                        snl_btm                   = nlevice  ! 15 ice layers
+                        kfrsnl                    = 1        ! layer 1 is always going to be the first ice layer
+                        mu0n                      = sqrt(c1-((c1-mu0**2)/(refindx*refindx))) !SZA under the refractive boundary 
+                        snw_rds_lcl(1:snl_btm)    =  nint_snw_rds_min ! temp
                         write(iulog,*) "CAW kfrsnl = ", kfrsnl
                         !write(iulog,*) " +CAW landunit type", lun_pp%itype(l_idx)
+                else
+                        snl_btm   = 0
+                        kfrsnl = 15
                 endif
                 ! +CAW - end
 
@@ -2459,20 +2463,20 @@ contains
                             lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                             rds_idx = 10 ! TEMP                 ! +CAW
                             ! ice optical properties (direct radiation)
-                            sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW 
-                            asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
+                            sca_cff_vlm_airbbl_lcl(i) = 3900! sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW 
+                            asm_prm_snw_lcl(i)        = 0.85 ! asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                             abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
                             vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW 
                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
                             !write(iulog,*) "CAW layer i = ",i
                             !write(iulog,*) "CAW layer type = ",lyr_typ(i)
-                            write(iulog,*) "CAW ice layer direct"
+                            !write(iulog,*) "CAW ice layer direct ran, layer #",i
                         endif
                       enddo
                    elseif (flg_slr_in == 2) then
                       do i=snl_top,snl_btm,1
-                         if (i>kfrsnl) then ! +CAW
+                         if (i<kfrsnl) then ! +CAW
                              rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1
                              ! snow optical properties (diffuse radiation)
                              ss_alb_snw_lcl(i)      = ss_alb_snw_dfs(rds_idx,bnd_idx)
@@ -2482,13 +2486,13 @@ contains
                              lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                              rds_idx = 10 ! TEMP                 ! +CAW
                              ! ice optical properties (direct radiation)
-                             sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW
-                             asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
+                             sca_cff_vlm_airbbl_lcl(i) = 3900! sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW
+                             asm_prm_snw_lcl(i)        = 0.85 !asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                              abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
                              vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW
                              ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
                              ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
-                             write(iulog,*) "CAW ice layer diffuse "
+                             !write(iulog,*) "CAW ice layer diffuse ran , layer #",i
                          endif
                       enddo
                    endif
@@ -3085,7 +3089,7 @@ contains
                  endif
 
                  !Underflow check (we've already tripped the error condition above)
-                 do i=snl_top,1,1
+                 do i=snl_top,snl_btm+1,1 ! CAW
                     if (flx_abs_lcl(i,bnd_idx) < 0._r8) then
                        flx_abs_lcl(i,bnd_idx) = 0._r8
                     endif
@@ -3160,12 +3164,16 @@ contains
 
              ! Weight output NIR absorbed layer fluxes (flx_abs) appropriately
              flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
-             do i=snl_top,1,1
+             do i=snl_top,snl_btm+1,1 !CAW
                 flx_sum = 0._r8
                 do bnd_idx= nir_bnd_bgn,nir_bnd_end
                    flx_sum = flx_sum + flx_wgt(bnd_idx)*flx_abs_lcl(i,bnd_idx)
                 enddo
                 flx_abs(c_idx,i,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
+                if (i>1) then 
+                   write (iulog,*) "CAW lyr =",i
+                   write (iulog,*) "CAW flx_abs =",flx_abs(c_idx,i,2)
+                endif 
              enddo
 
              ! near-IR direct albedo/absorption adjustment for high solar zenith angles
