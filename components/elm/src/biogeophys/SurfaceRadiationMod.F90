@@ -584,6 +584,7 @@ contains
 
           ! CASE1: No snow layers: all energy is absorbed in top soil layer
           if (snl(c) == 0) then
+                   
              sabg_lyr(p,:) = 0._r8
              sabg_lyr(p,1) = sabg(p)
              sabg_snl_sum  = sabg_lyr(p,1)
