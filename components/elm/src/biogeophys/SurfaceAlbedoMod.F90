@@ -377,6 +377,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_bc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -403,6 +405,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_bc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -439,6 +443,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_oc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -464,6 +470,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_oc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -500,6 +508,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_dst(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -525,6 +535,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_dst(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -552,6 +564,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_pur(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -577,6 +591,8 @@ contains
                                 flg_slr, &
                                 h2osno_liq(bounds%begc:bounds%endc, :), &
                                 h2osno_ice(bounds%begc:bounds%endc, :), &
+                                h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                                h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                                 snw_rds_in(bounds%begc:bounds%endc, :), &
                                 mss_cnc_aer_in_frc_pur(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
@@ -605,6 +621,8 @@ contains
                              flg_slr, &
                              h2osno_liq(bounds%begc:bounds%endc, :), &
                              h2osno_ice(bounds%begc:bounds%endc, :), &
+                             h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                             h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                              snw_rds_in(bounds%begc:bounds%endc, :), &
                              mss_cnc_aer_in_fdb(bounds%begc:bounds%endc, :, :), &
                              albsfc(bounds%begc:bounds%endc, :), &
@@ -630,6 +648,8 @@ contains
                              flg_slr, &
                              h2osno_liq(bounds%begc:bounds%endc, :), &
                              h2osno_ice(bounds%begc:bounds%endc, :), &
+                             h2osoi_liq(bounds%begc:bounds%endc, :), & ! +CAW
+                             h2osoi_ice(bounds%begc:bounds%endc, :), & ! +CAW
                              snw_rds_in(bounds%begc:bounds%endc, :), &
                              mss_cnc_aer_in_fdb(bounds%begc:bounds%endc, :, :), &
                              albsfc(bounds%begc:bounds%endc, :), &
