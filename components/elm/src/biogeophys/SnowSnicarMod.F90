@@ -2240,15 +2240,15 @@ contains
        do fc = 1,num_nourbanc
           c_idx = filter_nourbanc(fc)
           
-          !write (iulog,*) "CAW c_idx = ", c_idx
+         write(iulog,*) "CAW c",c_idx,"START SNICAR"
+
           l_idx     = col_pp%landunit(c_idx)
           ! +CAW - start
            if (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4)  then  ! land ice
                snl_btm                   = nlevice  ! 15 ice layers
                kfrsnl                    = 1        ! layer 1 is always going to be the first ice layer
-               mu0n                      = sqrt(c1-((c1-mu0**2)/(refindx*refindx))) !SZA under the refractive boundary 
-               write(iulog,*) "CAW c_idx = ", c_idx,"kfrsnl = ", kfrsnl
-              write(iulog,*) "CAW c_idx = ", c_idx, "+CAW landunit type", lun_pp%itype(l_idx)
+               mu0n                      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
+              ! write(iulog,*) "CAW c_idx = ", c_idx, "+CAW landunit type", lun_pp%itype(l_idx)
               if (h2osno_lcl < min_snw) then
                 lnd_ice = 1
               endif
@@ -2285,10 +2285,12 @@ contains
           !     Otherwise, set snow albedo to zero
           !if ( (coszen(c_idx) > 0._r8) .and. ( (h2osno_lcl > min_snw) .or. (kfrsnl==1) ) ) then
           if ( (coszen(c_idx) > 0._r8) .and. ( (h2osno_lcl > min_snw)  ) ) then
-                write(iulog,*) "CAW c_idx = ", c_idx, "qualifier for RT run kfrs = ", kfrsnl
-                write(iulog,*) "CAW c_idx = ", c_idx,"qualifier for RT run snow",(h2osno_lcl > min_snw)
-                write(iulog,*) "CAW c_idx = ", c_idx,"h2osno_lcl",h2osno_lcl
-                write(iulog,*) "CAW c_idx = ", c_idx,"snl(c_idx)",snl(c_idx)
+                write(iulog,*) "CAW c",c_idx, "qualifier for RT run kfrs = ", kfrsnl
+                write(iulog,*) "CAW c",c_idx,"qualifier for RT run snow",(h2osno_lcl > min_snw)
+                write(iulog,*) "CAW c",c_idx, "landunit type", lun_pp%itype(l_idx)
+                write(iulog,*) "CAW c",c_idx, "coszen", coszen(c_idx)
+                !write(iulog,*) "CAW c_idx = ", c_idx,"h2osno_lcl",h2osno_lcl
+                !write(iulog,*) "CAW c_idx = ", c_idx,"snl(c_idx)",snl(c_idx)
              ! Set variables specific to ELM
              if (flg_snw_ice == 1) then
                 ! If there is snow, but zero snow layers, we must create a layer locally.
@@ -2299,14 +2301,14 @@ contains
                    h2osno_ice_lcl(0) =  h2osno_lcl
                    h2osno_liq_lcl(0) =  0._r8
                    snw_rds_lcl(0)    =  nint_snw_rds_min
-                   write(iulog,*)"CAW c_idx = ", c_idx, "CAW flg_nosnl",flg_nosnl
+                  ! write(iulog,*)"CAW c_idx = ", c_idx, "CAW flg_nosnl",flg_nosnl
                 else
                   flg_nosnl         =  0
-                  write(iulog,*)"CAW c_idx = ", c_idx, "CAW flg_nosnl",flg_nosnl
-                     snl_lcl           =  snl(c_idx) 
-                     h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
-                     h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
-                     snw_rds_lcl(:)    =  snw_rds(c_idx,:)
+                  !write(iulog,*)"CAW c_idx = ", c_idx, "CAW flg_nosnl",flg_nosnl
+                  snl_lcl           =  snl(c_idx) 
+                  h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
+                  h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
+                  snw_rds_lcl(:)    =  snw_rds(c_idx,:)
                      
                 endif
                 
@@ -2318,8 +2320,8 @@ contains
                 !write(iulog,*) "CAW c_idx = ", c_idx,"snw_rds_lcl",snw_rds_lcl(:)
                 !write(iulog,*) "CAW c_idx = ", c_idx,"h2osno_ice_lcl(:)",h2osno_ice_lcl(:)
                 !write(iulog,*) "CAW c_idx = ", c_idx,"h2osno_liq_lcl(:)",h2osno_liq_lcl(:)
-                write(iulog,*) "CAW c_idx = ", c_idx,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(:)
-                write(iulog,*) "CAW c_idx = ", c_idx,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(:)
+               ! write(iulog,*) "CAW c_idx = ", c_idx,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(:)
+               ! write(iulog,*) "CAW c_idx = ", c_idx,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(:)
                 
                 h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
                 h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
@@ -2334,20 +2336,6 @@ contains
                 lat_coord = grc_pp%latdeg(g_idx)
                 lon_coord = grc_pp%londeg(g_idx)
                
-
-           !     ! +CAW - start
-           !     if (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4)  then  ! land ice
-           !             snl_btm                   = nlevice  ! 15 ice layers
-           !             kfrsnl                    = 1        ! layer 1 is always going to be the first ice layer
-           !             mu0n                      = sqrt(c1-((c1-mu0**2)/(refindx*refindx))) !SZA under the refractive boundary 
-           !             snw_rds_lcl(1:snl_btm)    =  nint_snw_rds_min ! temp
-           !             write(iulog,*) "CAW kfrsnl = ", kfrsnl
-           !             !write(iulog,*) " +CAW landunit type", lun_pp%itype(l_idx)
-           !     else
-           !             snl_btm   = 0
-           !             kfrsnl = 15
-           !     endif
-           !     ! +CAW - end
 
                 ! Set variables specific to CSIM
              else
@@ -2515,7 +2503,7 @@ contains
                             ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_drc(rds_idx,bnd_idx)
                          else
                             lyr_typ(i) = 2 ! +CAW indicates an ice layer 
-                            rds_idx = 10 ! TEMP                 ! +CAW
+                            rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
                             ! ice optical properties (direct radiation)
                             sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW 
                             asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
@@ -2523,7 +2511,7 @@ contains
                             vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW 
                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
-                            write(iulog,*) "CAW c_idx = ", c_idx," layer i = ",i, "ice layer optical properties direct ran"
+                           ! write(iulog,*) "CAW c_idx = ", c_idx," layer i = ",i, "ice layer optical properties direct ext_coe =",ext_cff_mss_snw_lcl(i)
                         endif
                       enddo
                    elseif (flg_slr_in == 2) then
@@ -2536,7 +2524,7 @@ contains
                              ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_dfs(rds_idx,bnd_idx)
                          else 
                              lyr_typ(i) = 2 ! +CAW indicates an ice layer 
-                             rds_idx = 10 ! TEMP                 ! +CAW
+                             rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
                              ! ice optical properties (direct radiation)
                              sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW
                              asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
@@ -2544,7 +2532,7 @@ contains
                              vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW
                              ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
                              ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
-                             write(iulog,*) "CAW c_idx = ", c_idx," layer i = ",i, "ice layer optical properties diffuse ran"
+                            ! write(iulog,*) "CAW c_idx = ", c_idx," layer i = ",i, "ice layer optical properties diffuse ext_coe =",ext_cff_mss_snw_lcl(i)
                          endif
                       enddo
                    endif
@@ -2764,13 +2752,13 @@ contains
                       L_snw(i)   = h2osno_ice_lcl(i)+h2osno_liq_lcl(i)
                       tau_snw(i) = L_snw(i)*ext_cff_mss_snw_lcl(i)
                       
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"snw_rds_lcl",snw_rds_lcl(i)
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2osno_ice_lcl(:)",h2osno_ice_lcl(i)
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2osno_liq_lcl(:)",h2osno_liq_lcl(i)
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(i)
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(i) 
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "L_snw=",L_snw(i)
-                      write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "tau=",tau_snw(i)
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"snw_rds_lcl",snw_rds_lcl(i)
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2osno_ice_lcl(:)",h2osno_ice_lcl(i)
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2osno_liq_lcl(:)",h2osno_liq_lcl(i)
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(i)
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(i) 
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "L_snw=",L_snw(i)
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "tau=",tau_snw(i)
 
                       do j=1,sno_nbr_aer
                          if (use_dust_snow_internal_mixing .and. (j >= 5)) then
@@ -2780,6 +2768,8 @@ contains
                          endif
                          tau_aer(i,j) = L_aer(i,j)*ext_cff_mss_aer_lcl(j)
                       enddo
+
+                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "L_aer=",L_aer(i,:)
 
                       tau_sum   = 0._r8
                       omega_sum = 0._r8
@@ -2853,7 +2843,7 @@ contains
                      ! of radiation to the interface just above the layer exceeds trmin.
 
                      if (trntdr(i) > trmin ) then
-                             write (iulog,*) "CAW c_idx = ", c_idx,"layer #=",i, "CAW min transmission met ",trntdr(i) > trmin
+                             write (iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"min trans met",trntdr(i) > trmin
 
                         ! calculation over layers with penetrating radiation
 
@@ -2931,6 +2921,7 @@ contains
                                 ! amplitudes for two polarizations: 1=perpendicular
                                 ! and 2=parallel to he plane containing incident,
                                 ! reflected and refracted rays.
+                                mu0= mu_not
                                 R1 = (mu0 - refindx*mu0n) / &
                                      (mu0 + refindx*mu0n)
                                 R2 = (refindx*mu0 - mu0n) / &
@@ -2939,11 +2930,21 @@ contains
                                      (mu0 + refindx*mu0n)
                                 T2 = c2*mu0 / &
                                      (refindx*mu0 + mu0n)
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0", mu0
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu_not", mu_not
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"R1",R1
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"R2",R2
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"T1",T1
+                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"T2",T2
+
 
                               ! unpolarized light for direct beam
                               Rf_dir_a = cp5 * (R1*R1 + R2*R2)
                               Tf_dir_a = cp5 * (T1*T1 + T2*T2)*refindx*mu0n/mu0
-
+                              
+                               write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"Rf_dir_a",Rf_dir_a
+                               write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"Tf_dir_a",Tf_dir_a
                               ! precalculated diffuse reflectivities and
                               ! transmissivities for incident radiation above and
                               ! below fresnel layer, using the direct albedos and
@@ -2981,7 +2982,9 @@ contains
 
                               ! update trnlay to include fresnel transmission
                               trnlay(i) = Tf_dir_a*trnlay(i)
-                              write(iulog,*) "c_idx = ", c_idx," layer i = ",i, "CHECK FL code ran FL is:", kfrsnl
+                              write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tdif_b",tdif_b(i)  
+                              write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tdif_a",tdif_a(i)                      
+
 
                         endif      ! i = kfrsnl
                         ! +CAW Fresnel code - end
@@ -3034,6 +3037,7 @@ contains
                       rupdir(snl_btm_itf) = albsfc(c_idx,1)
                       rupdif(snl_btm_itf) = albsfc(c_idx,1)
                   endif
+                  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc
 
                   do i=snl_btm,snl_top,-1
                      ! interface scattering
@@ -3100,13 +3104,41 @@ contains
                     F_sfc_pls = (trndir(snl_top)*rupdir(snl_top) + &
                                 (trntdr(snl_top)-trndir(snl_top))  &
                                  *rupdif(snl_top))*refk
+
+                    !write(iulog,*) "CAW c_idx = ", c_idx, "DIRECT albedo", albedo
                   !diffuse incident
                   else
                     albedo = rupdif(snl_top)
                     dftmp  = dfdif
                     refk   = c1/(c1 - rdndif(snl_top)*rupdif(snl_top))
                     F_sfc_pls = trndif(snl_top)*rupdif(snl_top)*refk
+                    !write(iulog,*) "CAW c_idx = ", c_idx, "DIFFUSE albedo", albedo
                   endif
+
+                  !if (kfrsnl==1) then
+                   !  write(iulog,*) "CAW c_idx = ", c_idx,"bnd_idx= ", bnd_idx, "albedo=", albedo
+                  !endif
+
+
+                 ! if (isnan(albedo)) then
+                 if (kfrsnl==1) then
+                     write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo=", albedo
+                     do i=snl_top,snl_btm,1
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"snw_rds",snw_rds_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_ice",h2osno_ice_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_liq",h2osno_liq_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_ice",h2osoi_ice_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_liq",h2osoi_liq_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"sca_cff_bbl", sca_cff_vlm_airbbl_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"asm_prm_sn",asm_prm_snw_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"abs_cff_m_i", abs_cff_mss_ice_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ext_cff_m_s",ext_cff_mss_snw_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ss_alb_s",ss_alb_snw_lcl(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw",L_snw(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau",tau_snw(i)
+                      enddo
+                      !call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+                  endif 
 
                   ! Absorbed flux in each layer
                   do i=snl_top,snl_btm,1
@@ -3181,9 +3213,6 @@ contains
                 endif
 
                 albout_lcl(bnd_idx) = albedo
-                if (kfrsnl==1) then !+CAW 
-                   write(iulog,*) "CAW c_idx = ", c_idx, "CAW albedo", albedo !+CAW 
-                endif !+CAW 
                 ! Check that albedo is less than 1
                 if (albout_lcl(bnd_idx) > 1.0) then
                    write (iulog,*) "SNICAR ERROR: Albedo > 1.0 at c: ", c_idx, " NSTEP= ",nstep
@@ -3237,8 +3266,8 @@ contains
                 flx_abs(c_idx,i,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
              enddo
              
-             write (iulog,*) "CAW c_idx = ", c_idx, "CAW flx_abs = ",flx_abs(c_idx,:,1)
-             write (iulog,*) "CAW c_idx = ", c_idx,"CAW flx_abs_lcl = ",flx_abs_lcl(:,1)
+            ! write (iulog,*) "CAW c_idx = ", c_idx, "CAW flx_abs = ",flx_abs(c_idx,:,1)
+            ! write (iulog,*) "CAW c_idx = ", c_idx,"CAW flx_abs_lcl = ",flx_abs_lcl(:,1)
 
 
 
