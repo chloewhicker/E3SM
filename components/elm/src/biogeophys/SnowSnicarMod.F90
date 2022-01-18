@@ -1831,7 +1831,6 @@ contains
      real(r8)          , intent(in)  :: albsfc         ( bounds%begc: , 1: )               ! albedo of surface underlying snow (col,bnd) [frc]
      real(r8)          , intent(out) :: albout         ( bounds%begc: , 1: )               ! snow albedo, averaged into 2 bands (=0 if no sun or no snow) (col,bnd) [frc]
      real(r8)          , intent(out) :: flx_abs        ( bounds%begc: , -nlevsno+1: , 1: ) ! absorbed flux in each layer per unit flux incident (col, lyr, bnd)
-     
      !
      ! !LOCAL VARIABLES:
      !
@@ -1862,7 +1861,7 @@ contains
      real(r8):: abs_cff_mss_ice_lcl(-nlevsno+1:nlevice)   ! +CAW
      real(r8):: vlm_frac_air(-nlevsno+1:nlevice)          ! +CAW
      real(r8):: abs_cff_mss_ice(1:numrad_snw)             ! +CAW
-     
+     real(r8):: rhos                                     ! snow / ice density [kg m-3] +CAW
      real(r8):: h2osoi_ice_lcl(-nlevsno+1:nlevice)       ! liquid water mass [kg/m2] +CAW
      real(r8):: h2osoi_liq_lcl(-nlevsno+1:nlevice)       ! liquid water mass [kg/m2]  +CAW 
 
@@ -1920,6 +1919,7 @@ contains
      integer :: j                                  ! aerosol number index [idx]
      integer :: m                                  ! secondary layer index [idx]
      integer :: nint_snw_rds_min                   ! nearest integer value of snw_rds_min
+     integer :: nint_snw_rds_max                   ! nearest integer value of snw_rds_max +CAW
      integer :: kfrsnl                             ! indicates the first ice layer = 1 +CAW 
      integer :: lyr_typ(-nlevsno+1:nlevice)        ! 1= snow layer, 2 = ice layer +CAW
      integer :: lnd_ice
@@ -1976,7 +1976,8 @@ contains
         rdndif(-nlevsno+1:nlevice+1)  , & ! reflectivity to diffuse radiation for layers above
         dfdir(-nlevsno+1:nlevice+1)   , & ! down-up flux at interface due to direct beam at top surface
         dfdif(-nlevsno+1:nlevice+1)   , & ! down-up flux at interface due to diffuse beam at top surface
-        dftmp(-nlevsno+1:nlevice+1)       ! temporary variable for down-up flux at interface
+        dftmp(-nlevsno+1:nlevice+1)   , & ! temporary variable for down-up flux at interface
+        dz_lcl(-nlevsno+1:nlevice+1)      ! lyr thickness 
 
      real(r8):: &
         rdir(-nlevsno+1:nlevice)       , & ! layer reflectivity to direct radiation
@@ -2165,6 +2166,7 @@ contains
 
      associate(&
           snl         =>   col_pp%snl           , & ! Input:  [integer (:)]  negative number of snow layers (col) [nbr]
+          dz          =>   col_pp%dz            , & ! Input:  [real(r8) (:,:) ]  layer thickness (col,lyr) [m]
           h2osno      =>   col_ws%h2osno        , & ! Input:  [real(r8) (:)]  snow liquid water equivalent (col) [kg/m2]
           frac_sno    =>   col_ws%frac_sno_eff    & ! Input:  [real(r8) (:)]  fraction of ground covered by snow (0 to 1)
           )
@@ -2172,6 +2174,8 @@ contains
        ! Define constants
        pi = SHR_CONST_PI
        nint_snw_rds_min = nint(snw_rds_min)
+       nint_snw_rds_max = nint(snw_rds_max)
+       write(iulog,*) "CAW nint_snw_rds_max",nint_snw_rds_max
 
        ! always use Delta approximation for snow
        DELTA = 1
@@ -2240,7 +2244,13 @@ contains
        do fc = 1,num_nourbanc
           c_idx = filter_nourbanc(fc)
           
-         write(iulog,*) "CAW c",c_idx,"START SNICAR"
+         write(iulog,*) "CAW c",c_idx,"START SNICAR" 
+         ! set snow/ice mass to be used for RT:
+          if (flg_snw_ice == 1) then
+             h2osno_lcl = h2osno(c_idx)
+          else
+             h2osno_lcl = h2osno_ice(c_idx,0)
+          endif
 
           l_idx     = col_pp%landunit(c_idx)
           ! +CAW - start
@@ -2262,29 +2272,22 @@ contains
           ! Zero absorbed radiative fluxes:
           do i=-nlevsno+1,nlevice,1 !+CAW - extend total # of layers
              flx_abs_lcl(:,:)   = 0._r8
-             !flx_abs(c_idx,i,:) = 0._r8
+             flx_abs(c_idx,i,:) = 0._r8
           enddo
 
           !+CAW - seperate out the flx variable that is used elsewhere in the model -- temp 
-          do i=-nlevsno+1,1,1
-             flx_abs(c_idx,i,:) = 0._r8
-          enddo 
+          !do i=-nlevsno+1,1,1
+          !   flx_abs(c_idx,i,:) = 0._r8
+          !enddo 
 
 
-          ! set snow/ice mass to be used for RT:
-          if (flg_snw_ice == 1) then
-             h2osno_lcl = h2osno(c_idx)
-          else
-             h2osno_lcl = h2osno_ice(c_idx,0)
-          endif
-
-
+         
           ! Qualifier for computing snow RT:
           !  1) sunlight from atmosphere model
           !  2) minimum amount of snow on ground.
           !     Otherwise, set snow albedo to zero
-          !if ( (coszen(c_idx) > 0._r8) .and. ( (h2osno_lcl > min_snw) .or. (kfrsnl==1) ) ) then
-          if ( (coszen(c_idx) > 0._r8) .and. ( (h2osno_lcl > min_snw)  ) ) then
+          if ( (coszen(c_idx) > 0._r8) .and. ( (h2osno_lcl > min_snw) .or. (lnd_ice==1) ) ) then
+          !if ( (coszen(c_idx) > 0._r8) .and. ( (h2osno_lcl > min_snw)  ) ) then
                 write(iulog,*) "CAW c",c_idx, "qualifier for RT run kfrs = ", kfrsnl
                 write(iulog,*) "CAW c",c_idx,"qualifier for RT run snow",(h2osno_lcl > min_snw)
                 write(iulog,*) "CAW c",c_idx, "landunit type", lun_pp%itype(l_idx)
@@ -2298,34 +2301,37 @@ contains
                 if (snl(c_idx) > -1) then
                    flg_nosnl         =  1
                    snl_lcl           =  -1
-                   h2osno_ice_lcl(0) =  h2osno_lcl
-                   h2osno_liq_lcl(0) =  0._r8
-                   snw_rds_lcl(0)    =  nint_snw_rds_min
-                  ! write(iulog,*)"CAW c_idx = ", c_idx, "CAW flg_nosnl",flg_nosnl
+
+                   if (lnd_ice==1) then 
+                      h2osno_ice_lcl(0) =  0.15
+                      h2osno_liq_lcl(0) =  0._r8
+                      snw_rds_lcl(0)    =  nint_snw_rds_max
+                   else
+                      h2osno_ice_lcl(0) =  h2osno_lcl
+                      h2osno_liq_lcl(0) =  0._r8
+                      snw_rds_lcl(0)    =  nint_snw_rds_min
+                   endif
                 else
                   flg_nosnl         =  0
-                  !write(iulog,*)"CAW c_idx = ", c_idx, "CAW flg_nosnl",flg_nosnl
                   snl_lcl           =  snl(c_idx) 
                   h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
                   h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
                   snw_rds_lcl(:)    =  snw_rds(c_idx,:)
-                     
                 endif
-                
+               
+                write(iulog,*) "CAW c",c_idx,"flg_nosnl",flg_nosnl
+                write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
+
                 h2osoi_liq_lcl(:) = h2osoi_liq(c_idx,:) ! +CAW
                 h2osoi_ice_lcl(:) = h2osoi_ice(c_idx,:) ! +CAW
                 
-                snw_rds_lcl(1:snl_btm)    = 130! nint_snw_rds_min ! temp CAW
-                
-                !write(iulog,*) "CAW c_idx = ", c_idx,"snw_rds_lcl",snw_rds_lcl(:)
-                !write(iulog,*) "CAW c_idx = ", c_idx,"h2osno_ice_lcl(:)",h2osno_ice_lcl(:)
-                !write(iulog,*) "CAW c_idx = ", c_idx,"h2osno_liq_lcl(:)",h2osno_liq_lcl(:)
-               ! write(iulog,*) "CAW c_idx = ", c_idx,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(:)
-               ! write(iulog,*) "CAW c_idx = ", c_idx,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(:)
+                snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
                 
                 h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
                 h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
+                dz_lcl(:)                 = dz(c_idx,:) !+CAW
                 
+
                 !snl_btm   = 0
                 snl_top   = snl_lcl+1
 
@@ -2334,8 +2340,7 @@ contains
                 g_idx     = col_pp%gridcell(c_idx)
                 sfctype   = lun_pp%itype(l_idx)
                 lat_coord = grc_pp%latdeg(g_idx)
-                lon_coord = grc_pp%londeg(g_idx)
-               
+                lon_coord = grc_pp%londeg(g_idx) 
 
                 ! Set variables specific to CSIM
              else
@@ -2469,7 +2474,6 @@ contains
                ! equivalent to mu0 in sea-ice shortwave model ice_shortwave.F90
                 mu_not = max(coszen(c_idx), cp01)
 
-
                    ! Set direct or diffuse incident irradiance to 1
                    ! (This has to be within the bnd loop because mu_not is adjusted in rare cases)
                    if (flg_slr_in == 1) then
@@ -2502,6 +2506,8 @@ contains
                             asm_prm_snw_lcl(i)     = asm_prm_snw_drc(rds_idx,bnd_idx)
                             ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_drc(rds_idx,bnd_idx)
                          else
+                            rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
+                            !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                             lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                             rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
                             ! ice optical properties (direct radiation)
@@ -2509,9 +2515,10 @@ contains
                             asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                             abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
                             vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW 
-                            ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
-                            ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
-                           ! write(iulog,*) "CAW c_idx = ", c_idx," layer i = ",i, "ice layer optical properties direct ext_coe =",ext_cff_mss_snw_lcl(i)
+                            ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * &
+                                    vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
+                            ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * &
+                                    vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
                         endif
                       enddo
                    elseif (flg_slr_in == 2) then
@@ -2523,6 +2530,8 @@ contains
                              asm_prm_snw_lcl(i)     = asm_prm_snw_dfs(rds_idx,bnd_idx)
                              ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_dfs(rds_idx,bnd_idx)
                          else 
+                             rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
+                             !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                              lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                              rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
                              ! ice optical properties (direct radiation)
@@ -2530,9 +2539,10 @@ contains
                              asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                              abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
                              vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW
-                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
-                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
-                            ! write(iulog,*) "CAW c_idx = ", c_idx," layer i = ",i, "ice layer optical properties diffuse ext_coe =",ext_cff_mss_snw_lcl(i)
+                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * &
+                                     vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
+                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * &
+                                     vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
                          endif
                       enddo
                    endif
@@ -2752,13 +2762,13 @@ contains
                       L_snw(i)   = h2osno_ice_lcl(i)+h2osno_liq_lcl(i)
                       tau_snw(i) = L_snw(i)*ext_cff_mss_snw_lcl(i)
                       
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"snw_rds_lcl",snw_rds_lcl(i)
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2osno_ice_lcl(:)",h2osno_ice_lcl(i)
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2osno_liq_lcl(:)",h2osno_liq_lcl(i)
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(i)
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(i) 
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "L_snw=",L_snw(i)
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "tau=",tau_snw(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"snw_rds_lcl",snw_rds_lcl(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2osno_ice_lcl(:)",h2osno_ice_lcl(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2osno_liq_lcl(:)",h2osno_liq_lcl(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(i) 
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw=",L_snw(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau=",tau_snw(i)
 
                       do j=1,sno_nbr_aer
                          if (use_dust_snow_internal_mixing .and. (j >= 5)) then
@@ -2769,7 +2779,7 @@ contains
                          tau_aer(i,j) = L_aer(i,j)*ext_cff_mss_aer_lcl(j)
                       enddo
 
-                      !write(iulog,*) "CAW c_idx = ", c_idx,"layer i= ",i, "L_aer=",L_aer(i,:)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_aer=",L_aer(i,:)
 
                       tau_sum   = 0._r8
                       omega_sum = 0._r8
@@ -2930,13 +2940,13 @@ contains
                                      (mu0 + refindx*mu0n)
                                 T2 = c2*mu0 / &
                                      (refindx*mu0 + mu0n)
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0", mu0
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu_not", mu_not
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"R1",R1
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"R2",R2
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"T1",T1
-                             write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"T2",T2
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0", mu0
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu_not", mu_not
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"R1",R1
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"R2",R2
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"T1",T1
+                            ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"T2",T2
 
 
                               ! unpolarized light for direct beam
@@ -3037,7 +3047,7 @@ contains
                       rupdir(snl_btm_itf) = albsfc(c_idx,1)
                       rupdif(snl_btm_itf) = albsfc(c_idx,1)
                   endif
-                  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc
+                  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc(c_idx,1:2)
 
                   do i=snl_btm,snl_top,-1
                      ! interface scattering
@@ -3256,14 +3266,16 @@ contains
              albout(c_idx,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
 
              ! Weight output NIR absorbed layer fluxes (flx_abs) appropriately
-             flx_abs(c_idx,:,1) = flx_abs_lcl(-nlevsno+1:1,1) ! +CAW
-             !flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
-             do i=snl_top,1,1 
+             !flx_abs(c_idx,:,1) = flx_abs_lcl(-nlevsno+1:1,1) ! +CAW
+             flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
+             do i=snl_top,snl_btm,1 
                 flx_sum = 0._r8
                 do bnd_idx= nir_bnd_bgn,nir_bnd_end
                    flx_sum = flx_sum + flx_wgt(bnd_idx)*flx_abs_lcl(i,bnd_idx)
                 enddo
                 flx_abs(c_idx,i,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
+                write(iulog,*) "CAW c",c_idx,"flx_abs(c_idx,i,1)",flx_abs(c_idx,i,1)
+                write(iulog,*) "CAW c",c_idx,"flx_abs(c_idx,i,2)",flx_abs(c_idx,i,2)
              enddo
              
             ! write (iulog,*) "CAW c_idx = ", c_idx, "CAW flx_abs = ",flx_abs(c_idx,:,1)
