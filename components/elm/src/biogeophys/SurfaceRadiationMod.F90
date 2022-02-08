@@ -350,6 +350,7 @@ contains
      ! !LOCAL VARIABLES:
      integer , parameter :: nband = numrad           ! number of solar radiation waveband classes
      real(r8), parameter :: mpe = 1.e-06_r8          ! prevents overflow for division by zero
+     integer  ::  nlevice                            ! +CAW number of glacier ice  
      integer  :: fp                                  ! non-urban filter pft index
      integer  :: p                                   ! patch index
      integer  :: c                                   ! column index
@@ -474,7 +475,9 @@ contains
           )
 
           dtime = dtime_mod
-          secs = secs_curr 
+          secs = secs_curr
+ 
+
        ! Initialize fluxes
        do fp = 1,num_nourbanp
           p = filter_nourbanp(fp)
@@ -583,18 +586,51 @@ contains
           sub_surf_abs_SW(c) = 0._r8
 
           ! CASE1: No snow layers: all energy is absorbed in top soil layer
-          if (snl(c) == 0) then
-                   
+          !if (snl(c) == 0 .and. ((lun_pp%itype(l) /= 3 .or. lun_pp%itype(l) /= 4)) ) then
+          if (snl(c) == 0) then        
              sabg_lyr(p,:) = 0._r8
              sabg_lyr(p,1) = sabg(p)
              sabg_snl_sum  = sabg_lyr(p,1)
-
-             ! CASE 2: Snow layers present: absorbed radiation is scaled according to
+             
+             if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+                write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+                write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+             endif
+             nlevice = 1
+            ! CASE 2: Snow layers present: absorbed radiation is scaled according to
              ! flux factors computed by SNICAR
+             ! CAW extending case 2 to run over bare glacier ice 
           else
-             do i = -nlevsno+1,1,1
+                  nlevice = 1
+          !  if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+          !      write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+          !      write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+          !     nlevice = 15
+          !      write(iulog,*)"CAW surfrad nlevice",nlevice                               !+CAW
+          !      flx_absdv(c,2:nlevice) = 0._r8
+          !      flx_absdn(c,2:nlevice) = 0._r8
+          !      flx_absiv(c,2:nlevice) = 0._r8
+          !      flx_absin(c,2:nlevice) = 0._r8
+           !  else
+           !      nlevice = 1    
+           !  endif                                                                  !+CAW
+
+ 
+             do i = -nlevsno+1,nlevice,1
                 sabg_lyr(p,i) = flx_absdv(c,i)*trd(p,1) + flx_absdn(c,i)*trd(p,2) + &
                      flx_absiv(c,i)*tri(p,1) + flx_absin(c,i)*tri(p,2)
+                if (nlevice == 15) then                                         !+CAW
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdv",flx_absdv(c,i)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdn",flx_absdn(c,i)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdiv",flx_absiv(c,i)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absin",flx_absin(c,i)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,1)",trd(p,1)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,2)",trd(p,2)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,1)",tri(p,1)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,2)",tri(p,2)
+                      write(iulog,*)"CAW surfrad c",c,"i",i,"sabg_lyr(p,i)",sabg_lyr(p,i)   !+CAW
+                endif                                                               !+CAW
+
                 ! summed radiation in active snow layers:
                 if (i >= snl(c)+1) then
                    sabg_snl_sum = sabg_snl_sum + sabg_lyr(p,i)

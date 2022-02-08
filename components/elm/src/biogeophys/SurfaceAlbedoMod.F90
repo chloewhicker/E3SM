@@ -149,8 +149,8 @@ contains
     real(r8) :: albsni_oc       (bounds%begc:bounds%endc,numrad)                          ! diffuse snow albedo without OC (radiative forcing)
     real(r8) :: albsnd_dst      (bounds%begc:bounds%endc,numrad)                          ! direct snow albedo without dust (radiative forcing)
     real(r8) :: albsni_dst      (bounds%begc:bounds%endc,numrad)                          ! diffuse snow albedo without dust (radiative forcing)
-    real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! flux absorption factor for just snow (direct) [frc]
-    real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
+    real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (direct) [frc]
+    real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
     real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)          ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
     real(r8) :: h2osno_liq      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! liquid snow content (col,lyr) [kg m-2]
     real(r8) :: h2osno_ice      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! ice content in snow (col,lyr) [kg m-2]
@@ -161,6 +161,7 @@ contains
     real(r8) :: mss_cnc_aer_in_frc_dst (bounds%begc:bounds%endc,-nlevsno+1:0,sno_nbr_aer) ! mass concentration of aerosol species for dust forcing (col,lyr,aer) [kg kg-1]
     real(r8) :: mss_cnc_aer_in_fdb     (bounds%begc:bounds%endc,-nlevsno+1:0,sno_nbr_aer) ! mass concentration of all aerosol species for feedback calculation (col,lyr,aer) [kg kg-1]
     real(r8), parameter :: mpe = 1.e-06_r8                                                ! prevents overflow for division by zero
+    integer ::  nlevice                                                  ! number of glaicer ice levels +CAW
     integer , parameter :: nband =numrad                                                  ! number of solar radiation waveband classes
   !-----------------------------------------------------------------------
 
@@ -247,9 +248,18 @@ contains
        g = veg_pp%gridcell(p)
           coszen_patch(p) = coszen_gcell(g)
     end do
+    
+
+    nlevice = 1
+    !if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
+    !    write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
+    !    nlevice = 15
+    !    write(iulog,*)"CAW nlevice",nlevice                                 !+CAW
+    !else
+    !    nlevice = 1
+    !endif                                                                  !+CAW
 
     ! Initialize output because solar radiation only done if coszen > 0
-
     do ib = 1, numrad
        do fc = 1,num_nourbanc
           c = filter_nourbanc(fc)
@@ -265,11 +275,14 @@ contains
           albgri_oc(c,ib)  = 0._r8
           albgrd_dst(c,ib) = 0._r8
           albgri_dst(c,ib) = 0._r8
-          do i=-nlevsno+1,1,1
+          do i=-nlevsno+1,nlevice,1 !+CAW
              flx_absdv(c,i) = 0._r8
              flx_absdn(c,i) = 0._r8
              flx_absiv(c,i) = 0._r8
              flx_absin(c,i) = 0._r8
+             if (i>1)then
+                     write (iulog,*) "CAW SURFRAD c",c,"i",i,"flx_absdv(c,i)",flx_absdv(c,i)
+             endif
           enddo
        end do
 
@@ -315,8 +328,10 @@ contains
     flg_snw_ice = 1   ! calling from ELM, not CSIM
     do c=bounds%begc,bounds%endc
        albsfc(c,:)     = albsoi(c,:)
-       h2osno_liq(c,:) = h2osoi_liq(c,-nlevsno+1:0)
-       h2osno_ice(c,:) = h2osoi_ice(c,-nlevsno+1:0)
+      ! h2osno_liq(c,:) = h2osoi_liq(c,-nlevsno+1:0)
+      ! h2osno_ice(c,:) = h2osoi_ice(c,-nlevsno+1:0)
+       h2osno_liq(c,:) = h2osoi_liq(c,:) !+CAW extend to include glacier lyrs
+       h2osno_ice(c,:) = h2osoi_ice(c,:) !+CAW extend to include glacier lyrs
        snw_rds_in(c,:) = nint(snw_rds(c,:))
     end do
 
@@ -702,7 +717,7 @@ contains
              ! also in this loop (but optionally in a different loop for vectorized code)
              !  weight snow layer radiative absorption factors based on snow fraction and soil albedo
              !  (NEEDED FOR ENERGY CONSERVATION)
-             do i = -nlevsno+1,1,1
+             do i = -nlevsno+1,nlevice,1  !+CAW
               if (subgridflag == 0 .or. lun_pp%itype(col_pp%landunit(c)) == istdlak) then
                 if (ib == 1) then
                    flx_absdv(c,i) = flx_absd_snw(c,i,ib)*frac_sno(c) + &
@@ -722,6 +737,8 @@ contains
                 elseif (ib == 2) then
                    flx_absdn(c,i) = flx_absd_snw(c,i,ib)*(1.-albsnd(c,ib))
                    flx_absin(c,i) = flx_absi_snw(c,i,ib)*(1.-albsni(c,ib))
+                   
+                  ! write (iulog,*) "CAW SurfAlbM c",c,"i",i,"flx_absdn",flx_absdn(c,i)
                 endif
              endif
              enddo
