@@ -207,7 +207,8 @@ contains
     real(r8) :: fn1(bounds%begc:bounds%endc,-nlevsno+1:nlevgrnd)            ! heat diffusion through the layer interface [W/m2]
     real(r8) :: dzm                                                         ! used in computing tridiagonal matrix
     real(r8) :: dzp                                                         ! used in computing tridiagonal matrix
-    real(r8) :: sabg_lyr_col(bounds%begc:bounds%endc,-nlevsno+1:1)          ! absorbed solar radiation (col,lyr) [W/m2]
+    !real(r8) :: sabg_lyr_col(bounds%begc:bounds%endc,-nlevsno+1:1)          ! absorbed solar radiation (col,lyr) [W/m2] 
+    real(r8) :: sabg_lyr_col(bounds%begc:bounds%endc,-nlevsno+1:15)                     !+ CAW extended to 15  
     real(r8) :: eflx_gnet_top                                               ! net energy flux into surface layer, pft-level [W/m2]
     real(r8) :: hs_top(bounds%begc:bounds%endc)                             ! net energy flux into surface layer (col) [W/m2]
     logical  :: cool_on(bounds%begl:bounds%endl)                            ! is urban air conditioning on?
@@ -1848,6 +1849,7 @@ contains
 
       ! Initialize:
       sabg_lyr_col(begc:endc,-nlevsno+1:1) = 0._r8
+      !sabg_lyr_col(begc:endc,-nlevsno+1:15) = 0._r8 ! +CAW
       hs_top(begc:endc)                    = 0._r8
       hs_top_snow(begc:endc)               = 0._r8
 
@@ -1876,7 +1878,8 @@ contains
 
                      hs_top_snow(c) = hs_top_snow(c) + eflx_gnet_snow*veg_pp%wtcol(p)
 
-                     do j = lyr_top,1,1
+                      do j = lyr_top,1,1
+                      !do j = lyr_top,1,15 !+CAW
                         sabg_lyr_col(c,j) = sabg_lyr_col(c,j) + sabg_lyr(p,j) * veg_pp%wtcol(p)
                      enddo
                   else
@@ -2909,6 +2912,9 @@ contains
          do fc = 1,num_filter
             c = filter(fc)
             l = col_pp%landunit(c)
+            if ((col_pp%landunit(c) == 3) .or. (col_pp%landunit(c) == 4)) then
+                    write(iulog,*)"CAW SOILTEMPMOD  c",c,"col_pp%landunit(c)",col_pp%landunit(c)
+            endif
             if (.not. lun_pp%urbpoi(l)) then
                if (j == col_pp%snl(c)+1) then
                   rt(c,j) = t_soisno(c,j) +  fact(c,j)*( hs_top_snow(c) &
@@ -4748,6 +4754,7 @@ contains
     integer                , intent(in)    :: num_filter                                         ! number of columns in the filter
     integer                , intent(in)    :: filter(:)                                          ! column filter
     real(r8)               , intent(in)    :: sabg_lyr(bounds%begc:bounds%endc,-nlevsno+1:1)     ! absorbed solar radiation (col,lyr) [W/m2]
+    !real(r8)               , intent(in)    :: sabg_lyr(bounds%begc:bounds%endc,-nlevsno+1:15)    ! +CAW
     real(r8)               , intent(in)    :: dhsdT(bounds%begc:bounds%endc)                     ! temperature derivative of "hs" [col]
     real(r8)               , intent(in)    :: hs_soil(bounds%begc:bounds%endc)                   ! heat flux on soil [W/m2]
     real(r8)               , intent(in)    :: hs_top_snow(bounds%begc:bounds%endc)               ! heat flux on top snow layer [W/m2]
@@ -4767,6 +4774,7 @@ contains
 
       do c = bounds%begc, bounds%endc
          do j = -nlevsno+1, 1
+         !do j = -nlevsno+1, 15 !+CAW
             eflx_sabg_lyr(c,j)  = sabg_lyr(c,j)
          enddo
 
