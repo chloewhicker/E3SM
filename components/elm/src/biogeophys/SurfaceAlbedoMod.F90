@@ -33,6 +33,8 @@ module SurfaceAlbedoMod
   use elm_instMod , only : alm_fates
   use topounit_varcon   , only : max_topounits  
   use TopounitType      , only : top_pp
+
+  use clm_time_manager , only : get_nstep ! +CAW 
   !
   implicit none
   save
@@ -113,6 +115,7 @@ contains
     type(surfalb_type)     , intent(inout) :: surfalb_vars
     !
     ! !LOCAL VARIABLES:
+    integer :: nstep                              ! current timestep [nbr] (debugging only) +CAW
     integer  :: i                                                                         ! index for layers [idx]
     integer  :: aer                                                                       ! index for sno_nbr_aer
     real(r8) :: extkn                      ! nitrogen allocation coefficient
@@ -149,9 +152,12 @@ contains
     real(r8) :: albsni_oc       (bounds%begc:bounds%endc,numrad)                          ! diffuse snow albedo without OC (radiative forcing)
     real(r8) :: albsnd_dst      (bounds%begc:bounds%endc,numrad)                          ! direct snow albedo without dust (radiative forcing)
     real(r8) :: albsni_dst      (bounds%begc:bounds%endc,numrad)                          ! diffuse snow albedo without dust (radiative forcing)
-    real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (direct) [frc]
-    real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
-    real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)          ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
+    real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! flux absorption factor for just snow (direct) [frc]
+    real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
+    real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
+    !real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (direct) [frc]
+    !real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
+    !real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)          ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
     real(r8) :: h2osno_liq      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! liquid snow content (col,lyr) [kg m-2]
     real(r8) :: h2osno_ice      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! ice content in snow (col,lyr) [kg m-2]
     integer  :: snw_rds_in      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! snow grain size sent to SNICAR (col,lyr) [microns]
@@ -250,14 +256,6 @@ contains
     end do
     
 
-    nlevice = 1
-    !if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
-    !    write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
-    !    nlevice = 15
-    !    write(iulog,*)"CAW nlevice",nlevice                                 !+CAW
-    !else
-    !    nlevice = 1
-    !endif                                                                  !+CAW
 
     ! Initialize output because solar radiation only done if coszen > 0
     do ib = 1, numrad
@@ -275,14 +273,19 @@ contains
           albgri_oc(c,ib)  = 0._r8
           albgrd_dst(c,ib) = 0._r8
           albgri_dst(c,ib) = 0._r8
-          do i=-nlevsno+1,nlevice,1 !+CAW
+          !if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
+          !        write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
+          !        nlevice = 0
+          !        write(iulog,*)"CAW SURFALB c",c,"nlevice",nlevice
+          !else
+          !        nlevice = 0
+          !endif
+          nlevice = 0
+          do i=-nlevsno+1,nlevice+1,1 !+CAW
              flx_absdv(c,i) = 0._r8
              flx_absdn(c,i) = 0._r8
              flx_absiv(c,i) = 0._r8
              flx_absin(c,i) = 0._r8
-             if (i>1)then
-                     write (iulog,*) "CAW SURFRAD c",c,"i",i,"flx_absdv(c,i)",flx_absdv(c,i)
-             endif
           enddo
        end do
 
@@ -328,10 +331,10 @@ contains
     flg_snw_ice = 1   ! calling from ELM, not CSIM
     do c=bounds%begc,bounds%endc
        albsfc(c,:)     = albsoi(c,:)
-      ! h2osno_liq(c,:) = h2osoi_liq(c,-nlevsno+1:0)
-      ! h2osno_ice(c,:) = h2osoi_ice(c,-nlevsno+1:0)
-       h2osno_liq(c,:) = h2osoi_liq(c,:) !+CAW extend to include glacier lyrs
-       h2osno_ice(c,:) = h2osoi_ice(c,:) !+CAW extend to include glacier lyrs
+      h2osno_liq(c,:) = h2osoi_liq(c,-nlevsno+1:0)
+      h2osno_ice(c,:) = h2osoi_ice(c,-nlevsno+1:0)
+      ! h2osno_liq(c,:) = h2osoi_liq(c,:) !+CAW extend to include glacier lyrs
+      ! h2osno_ice(c,:) = h2osoi_ice(c,:) !+CAW extend to include glacier lyrs
        snw_rds_in(c,:) = nint(snw_rds(c,:))
     end do
 
@@ -683,15 +686,29 @@ contains
                            flx_absi_snw(bounds%begc:bounds%endc, :, :) )
        endif ! end if use_snicar_ad
 
-    ! ground albedos and snow-fraction weighting of snow absorption factors
+      ! Get current timestep  ! +CAW
+        nstep = get_nstep()   ! +CAW
+    
+   ! ground albedos and snow-fraction weighting of snow absorption factors
     do ib = 1, nband
        do fc = 1,num_nourbanc
           c = filter_nourbanc(fc)
              if (coszen_col(c) > 0._r8) then
+                
+
              ! ground albedo was originally computed in SoilAlbedo, but is now computed here
              ! because the order of SoilAlbedo and SNICAR_RT/SNICAR_AD_RT was switched for SNICAR/SNICAR_AD_RT.
              albgrd(c,ib) = albsod(c,ib)*(1._r8-frac_sno(c)) + albsnd(c,ib)*frac_sno(c)
              albgri(c,ib) = albsoi(c,ib)*(1._r8-frac_sno(c)) + albsni(c,ib)*frac_sno(c)
+ 
+
+             if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
+                write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
+                write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"frac_sno(c)",frac_sno(c)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albgrd(c,ib)",albgrd(c,ib) 
+             endif
 
              ! albedos for radiative forcing calculations:
              if (use_snicar_frc) then
@@ -712,12 +729,12 @@ contains
                 ! pure snow albedo for all-aerosol radiative forcing
                 albgrd_pur(c,ib) = albsod(c,ib)*(1.-frac_sno(c)) + albsnd_pur(c,ib)*frac_sno(c)
                 albgri_pur(c,ib) = albsoi(c,ib)*(1.-frac_sno(c)) + albsni_pur(c,ib)*frac_sno(c)
-             end if
+             endif
 
              ! also in this loop (but optionally in a different loop for vectorized code)
              !  weight snow layer radiative absorption factors based on snow fraction and soil albedo
              !  (NEEDED FOR ENERGY CONSERVATION)
-             do i = -nlevsno+1,nlevice,1  !+CAW
+             do i = -nlevsno+1,nlevice+1,1  !+CAW
               if (subgridflag == 0 .or. lun_pp%itype(col_pp%landunit(c)) == istdlak) then
                 if (ib == 1) then
                    flx_absdv(c,i) = flx_absd_snw(c,i,ib)*frac_sno(c) + &
@@ -738,8 +755,8 @@ contains
                    flx_absdn(c,i) = flx_absd_snw(c,i,ib)*(1.-albsnd(c,ib))
                    flx_absin(c,i) = flx_absi_snw(c,i,ib)*(1.-albsni(c,ib))
                    
-                  ! write (iulog,*) "CAW SurfAlbM c",c,"i",i,"flx_absdn",flx_absdn(c,i)
                 endif
+                !write (iulog,*) "CAW SURFALB c",c,"i",i,"flx_absdn",flx_absdn(c,i)
              endif
              enddo
           endif
@@ -1099,8 +1116,17 @@ contains
                 ! changed from local variable to clm_type:
                 !albsod = albice(ib)
                 !albsoi = albsod
+                !if (snl(c) == 0) then             !+CAW 
+                !   albsod(c,ib) = albsnd(c,ib)    !+CAW 
+                !   albsoi(c,ib) = albsni(c,ib)    !+CAW 
+                !else                              !+CAW 
+                !   albsod(c,ib) = albice(ib)      !+CAW 
+                !   albsoi(c,ib) = albsod(c,ib)    !+CAW 
+                !endif                             !+CAW 
                 albsod(c,ib) = albice(ib)
                 albsoi(c,ib) = albsod(c,ib)
+                write(iulog,*)"CAW SURFALB2 c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))
+                write(iulog,*)"CAW SURFALB2 c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
              ! unfrozen lake, wetland
              else if (t_grnd(c) > tfrz .or. (lakepuddling .and. lun_pp%itype(l) == istdlak .and. t_grnd(c) == tfrz .and. &
                       lake_icefrac(c,1) < 1._r8 .and. lake_icefrac(c,2) > 0._r8)  .and. top_pp%active(t)) then
@@ -1118,7 +1144,7 @@ contains
                    albsoi(c,ib) = 0.10_r8
                 else
                    albsoi(c,ib) = albsod(c,ib)
-                end if
+                endif
 
              else                                     ! frozen lake, wetland
                 ! Introduce crude surface frozen fraction according to D. Mironov (2010)
@@ -1325,7 +1351,7 @@ contains
        do fp = 1,num_vegsol
           p = filter_vegsol(fp)
           c = veg_pp%column(p)
-
+          
           ! Calculate two-stream parameters omega, betad, and betai.
           ! Omega, betad, betai are adjusted for snow. Values for omega*betad
           ! and omega*betai are calculated and then divided by the new omega
@@ -1427,7 +1453,7 @@ contains
             ftid(p,ib) = ftid(p,ib) * fd_prime
             fd_top_adjust(p,ib) = fd_prime
           endif
-
+          
           a1 = h1 / sigma * (1._r8 - s2*s2) / (2._r8 * twostext(p)) &
              + h2         * (1._r8 - s2*s1) / (twostext(p) + h) &
              + h3         * (1._r8 - s2/s1) / (twostext(p) - h)

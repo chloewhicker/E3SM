@@ -292,6 +292,7 @@ contains
     allocate(this%fabd_sha_z_patch   (begp:endp,nlevcan))      ; this%fabd_sha_z_patch   (:,:) = 0._r8
     allocate(this%fabi_sun_z_patch   (begp:endp,nlevcan))      ; this%fabi_sun_z_patch   (:,:) = 0._r8
     allocate(this%fabi_sha_z_patch   (begp:endp,nlevcan))      ; this%fabi_sha_z_patch   (:,:) = 0._r8
+    
     allocate(this%flx_absdv_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absdv_col      (:,:) = spval
     allocate(this%flx_absdn_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absdn_col      (:,:) = spval
     allocate(this%flx_absiv_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absiv_col      (:,:) = spval
@@ -808,7 +809,6 @@ contains
          dim1name='column', dim2name='levsno1', switchdim=.true., lowerb2=-nlevsno+1, upperb2=1, &
          long_name='snow layer flux absorption factors (direct, VIS)', units='fraction', &
          interpinic_flag='interp', readvar=readvar, data=this%flx_absdv_col)
-
     call restartvar(ncid=ncid, flag=flag, varname='flx_absdn', xtype=ncd_double,  &
          dim1name='column', dim2name='levsno1', switchdim=.true., lowerb2=-nlevsno+1, upperb2=1, &
          long_name='snow layer flux absorption factors (direct, NIR)', units='fraction', &
