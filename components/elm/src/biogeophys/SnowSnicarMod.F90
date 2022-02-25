@@ -1806,6 +1806,9 @@ contains
      ! Snow on land and snow on sea ice will be treated
      ! with the same model for their solar radiative properties.
      !
+
+     ! Model was extended to run RT calcs over bare and snow covered ice +CAW 
+
      ! The inputs and outputs are the same to subroutine SNICAR_RT
      !
      ! !USES:
@@ -1887,6 +1890,7 @@ contains
 
      real(r8):: albedo                             ! temporary snow albedo [frc]
      real(r8):: flx_sum                            ! temporary summation variable for NIR weighting
+     real(r8):: flx_sum2(-nlevsno+1:nlevice+1)     ! temporary summation variable for NIR weighting !CAW 
      real(r8):: albout_lcl(numrad_snw)             ! snow albedo by band [frc]
      real(r8):: flx_abs_lcl(-nlevsno+1:nlevice+1,numrad_snw)! absorbed flux per unit incident flux at top of snowpack (lyr,bnd) [frc]
      real(r8):: L_snw(-nlevsno+1:nlevice)                ! h2o mass (liquid+solid) in snow layer (lyr) [kg/m2]
@@ -2175,7 +2179,6 @@ contains
        pi = SHR_CONST_PI
        nint_snw_rds_min = nint(snw_rds_min)
        nint_snw_rds_max = nint(snw_rds_max)
-       write(iulog,*) "CAW nint_snw_rds_max",nint_snw_rds_max
 
        ! always use Delta approximation for snow
        DELTA = 1
@@ -2272,12 +2275,13 @@ contains
           ! Zero absorbed radiative fluxes:
           do i=-nlevsno+1,snl_btm+1,1 !+CAW - extend total # of layers
              flx_abs_lcl(i,:)   = 0._r8
-             flx_abs(c_idx,i,:) = 0._r8
+             flx_sum2(i)        = 0._r8 
+          !   flx_abs(c_idx,i,:) = 0._r8
           enddo
           !+CAW - seperate out the flx variable that is used elsewhere in the model -- temp 
-          !do i=-nlevsno+1,1,1
-          !   flx_abs(c_idx,i,:) = 0._r8
-          !enddo 
+          do i=-nlevsno+1,1,1
+             flx_abs(c_idx,i,:) = 0._r8
+          enddo 
 
 
          
@@ -3122,15 +3126,18 @@ contains
                     F_sfc_pls = (trndir(snl_top)*rupdir(snl_top) + &
                                 (trntdr(snl_top)-trndir(snl_top))  &
                                  *rupdif(snl_top))*refk
-
-                    !write(iulog,*) "CAW c_idx = ", c_idx, "DIRECT albedo", albedo
-                  !diffuse incident
+                    !if (kfrsnl==1) then
+                    !   write(iulog,*) "CAW c",c_idx,"DIRECT ice alb", rupdir(1)
+                    !endif
+                    !diffuse incident
                   else
                     albedo = rupdif(snl_top)
                     dftmp  = dfdif
                     refk   = c1/(c1 - rdndif(snl_top)*rupdif(snl_top))
                     F_sfc_pls = trndif(snl_top)*rupdif(snl_top)*refk
-                    !write(iulog,*) "CAW c_idx = ", c_idx, "DIFFUSE albedo", albedo
+                    !if (kfrsnl==1) then
+                    !   write(iulog,*) "CAW c",c_idx,"DIFF ice alb", rupdir(1)
+                    !endif
                   endif
 
                   if (isnan(albedo)) then
@@ -3268,33 +3275,55 @@ contains
              enddo
              albout(c_idx,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
 
+             
+             ! sum flxs with depth over land ice so all absorbed rad is in top lyr
+             !if (kfrsnl == 1) then
+             !   flx_sum = 0._r8
+             !   do i=snl_top,snl_btm,1
+             !   if (i < 1) then
+             !      flx_abs(c_idx,i,1) = flx_abs_lcl(i,1)
+             !   else
+             !      flx_sum = flx_sum + flx_abs_lcl(c_idx,i,1)
+             !   enddo
+             !   flx_abs(c_idx,:,1) = flx_sum
+             !   write(iulog,*) "CAW c",c_idx,"flx_sum",flx_sum
+             !endif
+             
+             
              ! Weight output NIR absorbed layer fluxes (flx_abs) appropriately
-             flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
-             if (kfrsnl == 1) then
-                write(iulog,*) "CAW c",c_idx,"i",i,"flx_abs(1)",flx_abs(c_idx,:,1)
-             endif
-
+             !flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
+             flx_abs(c_idx,-nlevsno+1:0,1) = flx_abs_lcl(-nlevsno+1:0,1)
+             flx_abs(c_idx,1,1) = sum(flx_abs_lcl(1:snl_btm,1))
+             
              do i=snl_top,snl_btm,1 
                 flx_sum = 0._r8
+                flx_sum2(i) = 0._r8
                 do bnd_idx= nir_bnd_bgn,nir_bnd_end
                    flx_sum = flx_sum + flx_wgt(bnd_idx)*flx_abs_lcl(i,bnd_idx)
-                 !  if (kfrsnl == 1) then
-                 !    write(iulog,*) "CAW c",c_idx,"i",i,"bnd",bnd_idx,"flx_wgt",flx_wgt(bnd_idx)
-                 !    write(iulog,*) "CAW c",c_idx,"i",i,"bnd",bnd_idx,"flx_abs_lcl",flx_abs_lcl(i,bnd_idx)
-                 !  endif
+                  ! if (kfrsnl == 1) then
+                     !write(iulog,*) "CAW c",c_idx,"i",i,"bnd",bnd_idx,"flx_wgt",flx_wgt(bnd_idx)
+                     !write(iulog,*) "CAW c",c_idx,"i",i,"bnd",bnd_idx,"flx_abs_lcl",flx_abs_lcl(i,bnd_idx)
+                   !endif
                 enddo
-                flx_abs(c_idx,i,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
+                flx_sum2(i) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
+                !flx_abs(c_idx,i,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
                 !if (kfrsnl == 1) then
-                !  write(iulog,*) "CAW c",c_idx,"i",i,"flx_sum",flx_sum
+                !  write(iulog,*) "CAW c",c_idx,"i",i,"flx_sum2(i)",flx_sum2(i)
                 !  write(iulog,*) "CAW c",c_idx,"i",i,"sum(flx_wgt",sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
                 !  write(iulog,*) "CAW c",c_idx,"i",i,"flx_abs(2)",flx_abs(c_idx,i,2)
                 !endif
-             enddo
+             enddo 
+             flx_abs(c_idx, -nlevsno+1:0, 2) = flx_sum2(-nlevsno+1:0)
+             flx_abs(c_idx, 1, 2) = sum(flx_sum2(1:snl_btm))
+             
+
 
 
              ! debugging loop 
-             if (kfrsnl == 2) then
-                write(iulog,*)"CAW c",c_idx,"flx_wgt(:)",flx_wgt(:)
+             if (kfrsnl == 1) then
+                write(iulog,*)"CAW c",c_idx,"nstep",nstep
+                write(iulog,*)"CAW c",c_idx,"albout(c_idx,1)",albout(c_idx,1)
+                write(iulog,*)"CAW c",c_idx,"albout(c_idx,2)",albout(c_idx,2)
                 write(iulog,*)"CAW c",c_idx,"flx_abs(c_idx,:,1)",flx_abs(c_idx,:,1)
                 write(iulog,*)"CAW c",c_idx,"flx_abs(c_idx,:,2)",flx_abs(c_idx,:,2)
                 write(iulog,*)"CAW c",c_idx,"flx_abs_lcl(:,1)",flx_abs_lcl(:,1)

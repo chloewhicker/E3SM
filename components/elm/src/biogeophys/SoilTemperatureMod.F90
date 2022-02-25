@@ -2912,9 +2912,6 @@ contains
          do fc = 1,num_filter
             c = filter(fc)
             l = col_pp%landunit(c)
-            if ((col_pp%landunit(c) == 3) .or. (col_pp%landunit(c) == 4)) then
-                    write(iulog,*)"CAW SOILTEMPMOD  c",c,"col_pp%landunit(c)",col_pp%landunit(c)
-            endif
             if (.not. lun_pp%urbpoi(l)) then
                if (j == col_pp%snl(c)+1) then
                   rt(c,j) = t_soisno(c,j) +  fact(c,j)*( hs_top_snow(c) &

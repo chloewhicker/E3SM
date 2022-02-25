@@ -534,6 +534,14 @@ contains
              tri(p,ib) = forc_solad(t,ib)*ftid(p,ib) + forc_solai(t,ib)*ftii(p,ib)
              ! Solar radiation absorbed by ground surface
              ! calculate absorbed solar by soil/snow separately
+
+             !if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+             !   write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+             !   write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+             !   write(iulog,*)"CAW surfrad c",c, "albsod",albsod(c,ib)
+             !   write(iulog,*)"CAW surfrad c",c, "albsoi",albsoi(c,ib)
+             !endif
+
              absrad  = trd(p,ib)*(1._r8-albsod(c,ib)) + tri(p,ib)*(1._r8-albsoi(c,ib))
              sabg_soil(p) = sabg_soil(p) + absrad
              absrad  = trd(p,ib)*(1._r8-albsnd_hst(c,ib)) + tri(p,ib)*(1._r8-albsni_hst(c,ib))
@@ -592,44 +600,33 @@ contains
              sabg_lyr(p,1) = sabg(p)
              sabg_snl_sum  = sabg_lyr(p,1)
              
-             if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
-                write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
-                write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
-             endif
-             nlevice = 1
+            ! if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+            ! endif
             ! CASE 2: Snow layers present: absorbed radiation is scaled according to
              ! flux factors computed by SNICAR
-             ! CAW extending case 2 to run over bare glacier ice 
           else
-                  nlevice = 1
-          !  if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
-          !      write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
-          !      write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
-          !     nlevice = 15
-          !      write(iulog,*)"CAW surfrad nlevice",nlevice                               !+CAW
-          !      flx_absdv(c,2:nlevice) = 0._r8
-          !      flx_absdn(c,2:nlevice) = 0._r8
-          !      flx_absiv(c,2:nlevice) = 0._r8
-          !      flx_absin(c,2:nlevice) = 0._r8
-           !  else
-           !      nlevice = 1    
-           !  endif                                                                  !+CAW
+           !if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+           !endif                                                                  !+CAW
 
  
-             do i = -nlevsno+1,nlevice,1
+             do i = -nlevsno+1,nlevice+1,1
                 sabg_lyr(p,i) = flx_absdv(c,i)*trd(p,1) + flx_absdn(c,i)*trd(p,2) + &
                      flx_absiv(c,i)*tri(p,1) + flx_absin(c,i)*tri(p,2)
-                if (nlevice == 15) then                                         !+CAW
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdv",flx_absdv(c,i)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdn",flx_absdn(c,i)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdiv",flx_absiv(c,i)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absin",flx_absin(c,i)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,1)",trd(p,1)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,2)",trd(p,2)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,1)",tri(p,1)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,2)",tri(p,2)
-                      write(iulog,*)"CAW surfrad c",c,"i",i,"sabg_lyr(p,i)",sabg_lyr(p,i)   !+CAW
-                endif                                                               !+CAW
+           !     if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdv",flx_absdv(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdn",flx_absdn(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdiv",flx_absiv(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absin",flx_absin(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,1)",trd(p,1)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,2)",trd(p,2)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,1)",tri(p,1)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,2)",tri(p,2)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"sabg_lyr(p,i)",sabg_lyr(p,i)   !+CAW
+           !     endif                                                               !+CAW
 
                 ! summed radiation in active snow layers:
                 if (i >= snl(c)+1) then
