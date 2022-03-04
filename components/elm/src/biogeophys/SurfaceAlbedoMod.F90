@@ -115,6 +115,7 @@ contains
     type(surfalb_type)     , intent(inout) :: surfalb_vars
     !
     ! !LOCAL VARIABLES:
+    integer :: bare_ice       (bounds%begc:bounds%endc)                     ! flag variable for bare ice CAW
     integer :: nstep                              ! current timestep [nbr] (debugging only) +CAW
     integer  :: i                                                                         ! index for layers [idx]
     integer  :: aer                                                                       ! index for sno_nbr_aer
@@ -154,7 +155,10 @@ contains
     real(r8) :: albsni_dst      (bounds%begc:bounds%endc,numrad)                          ! diffuse snow albedo without dust (radiative forcing)
     real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! flux absorption factor for just snow (direct) [frc]
     real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
-    real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
+    real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:1,numrad)             ! dummy array for forcing calls 
+    real(r8) :: foo_alb         (bounds%begc:bounds%endc,numrad)                         ! dummy array for ice albedo + CAW 
+    real(r8) :: albicd          (bounds%begc:bounds%endc,numrad)                         ! direct ice albedo + CAW 
+    real(r8) :: albici          (bounds%begc:bounds%endc,numrad)                         ! direct ice albedo + CAW 
     !real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (direct) [frc]
     !real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
     !real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)          ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
@@ -275,8 +279,8 @@ contains
           albgri_dst(c,ib) = 0._r8
           !if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
           !        write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
-          !        nlevice = 0
-          !        write(iulog,*)"CAW SURFALB c",c,"nlevice",nlevice
+          !        bare_ice(c) = 1
+          !        write(iulog,*)"CAW SURFALB c",c,"bare_ice",bare_ice
           !else
           !        nlevice = 0
           !endif
@@ -401,6 +405,7 @@ contains
                                 mss_cnc_aer_in_frc_bc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsnd_bc(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
                 call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -429,6 +434,7 @@ contains
                                 mss_cnc_aer_in_frc_bc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsni_bc(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -467,6 +473,7 @@ contains
                                 mss_cnc_aer_in_frc_oc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsnd_oc(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -494,6 +501,7 @@ contains
                                 mss_cnc_aer_in_frc_oc(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsni_oc(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -532,6 +540,7 @@ contains
                                 mss_cnc_aer_in_frc_dst(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsnd_dst(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -559,6 +568,7 @@ contains
                                 mss_cnc_aer_in_frc_dst(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsni_dst(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -588,6 +598,7 @@ contains
                                 mss_cnc_aer_in_frc_pur(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsnd_pur(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -615,6 +626,7 @@ contains
                                 mss_cnc_aer_in_frc_pur(bounds%begc:bounds%endc, :, :), &
                                 albsfc(bounds%begc:bounds%endc, :), &
                                 albsni_pur(bounds%begc:bounds%endc, :), &
+                                foo_alb(bounds%begc:bounds%endc, :), &    !+CAW
                                 foo_snw(bounds%begc:bounds%endc, :, :) )
           else
               call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -645,6 +657,7 @@ contains
                              mss_cnc_aer_in_fdb(bounds%begc:bounds%endc, :, :), &
                              albsfc(bounds%begc:bounds%endc, :), &
                              albsnd(bounds%begc:bounds%endc, :), &
+                             albicd(bounds%begc:bounds%endc, :), &    !+CAW
                              flx_absd_snw(bounds%begc:bounds%endc, :, :) )
        else
             call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -672,6 +685,7 @@ contains
                              mss_cnc_aer_in_fdb(bounds%begc:bounds%endc, :, :), &
                              albsfc(bounds%begc:bounds%endc, :), &
                              albsni(bounds%begc:bounds%endc, :), &
+                             albici(bounds%begc:bounds%endc, :), &    !+CAW
                              flx_absi_snw(bounds%begc:bounds%endc, :, :) )
        else
             call SNICAR_RT(flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,    &
@@ -694,21 +708,28 @@ contains
        do fc = 1,num_nourbanc
           c = filter_nourbanc(fc)
              if (coszen_col(c) > 0._r8) then
-                
+ 
+             if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
+                write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
+                write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)",albsoi(c,ib)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"frac_sno(c)",frac_sno(c)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albici(c,ib)",albici(c,ib)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albicd(c,ib)",albicd(c,ib)
+
+                albsod(c,ib) = albicd(c,ib)
+                albsoi(c,ib) = albici(c,ib)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)-chd",albsod(c,ib)
+                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)-chd",albsoi(c,ib)
+             endif
+               
 
              ! ground albedo was originally computed in SoilAlbedo, but is now computed here
              ! because the order of SoilAlbedo and SNICAR_RT/SNICAR_AD_RT was switched for SNICAR/SNICAR_AD_RT.
              albgrd(c,ib) = albsod(c,ib)*(1._r8-frac_sno(c)) + albsnd(c,ib)*frac_sno(c)
              albgri(c,ib) = albsoi(c,ib)*(1._r8-frac_sno(c)) + albsni(c,ib)*frac_sno(c)
  
-
-             if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
-                write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
-                write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"frac_sno(c)",frac_sno(c)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albgrd(c,ib)",albgrd(c,ib) 
-             endif
 
              ! albedos for radiative forcing calculations:
              if (use_snicar_frc) then
