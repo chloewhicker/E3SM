@@ -14,7 +14,7 @@ module SurfaceAlbedoMod
   use landunit_varcon   , only : istsoil, istcrop, istdlak
   use elm_varcon        , only : grlnd, namep, namet
   use elm_varpar        , only : numrad, nlevcan, nlevsno, nlevcan
-  use elm_varctl        , only : fsurdat, iulog, subgridflag, use_snicar_frc, use_fates, use_snicar_ad, use_top_solar_rad
+  use elm_varctl        , only : fsurdat, iulog, subgridflag, use_snicar_frc, use_fates, use_snicar_ad, use_snicar_lndice, use_top_solar_rad
   use VegetationPropertiesType    , only : veg_vp
   use SnowSnicarMod     , only : sno_nbr_aer, SNICAR_RT, SNICAR_AD_RT, DO_SNO_AER, DO_SNO_OC
   use AerosolType       , only : aerosol_type
@@ -93,7 +93,7 @@ contains
     !
     ! !USES:
       !$acc routine seq
-    use elm_varctl         , only : iulog, subgridflag, use_snicar_frc, use_fates, use_snicar_ad, use_top_solar_rad
+    use elm_varctl         , only : iulog, subgridflag, use_snicar_frc, use_fates, use_snicar_ad, use_snicar_lndice, use_top_solar_rad
     use shr_orb_mod
 
     !
@@ -709,7 +709,7 @@ contains
           c = filter_nourbanc(fc)
              if (coszen_col(c) > 0._r8) then
  
-             if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
+             if ( (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4) .and. (use_snicar_lndice) ) then   !+CAW
                 write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
                 write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
                 write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)

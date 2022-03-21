@@ -11,7 +11,7 @@ module SnowSnicarMod
   use shr_kind_mod    , only : r8 => shr_kind_r8
   use shr_sys_mod     , only : shr_sys_flush
   use shr_log_mod     , only : errMsg => shr_log_errMsg
-  use elm_varctl      , only : iulog, use_extrasnowlayers
+  use elm_varctl      , only : iulog, use_extrasnowlayers, use_snicar_lndice
   use elm_varcon      , only : namec 
   use shr_const_mod   , only : SHR_CONST_RHOICE
   use abortutils      , only : endrun
@@ -1816,7 +1816,7 @@ contains
      use elm_varpar       , only : nlevsno, numrad
      use elm_time_manager , only : get_nstep
      use shr_const_mod    , only : SHR_CONST_PI
-     use elm_varctl       , only : snow_shape, snicar_atm_type, use_dust_snow_internal_mixing
+     use elm_varctl       , only : snow_shape, snicar_atm_type, use_dust_snow_internal_mixing, use_snicar_lndice
      !
      ! !ARGUMENTS:
      integer           , intent(in)  :: flg_snw_ice                                        ! flag: =1 when called from CLM, =2 when called from CSIM
@@ -2258,16 +2258,19 @@ contains
 
           l_idx     = col_pp%landunit(c_idx)
           ! +CAW - start
-           if (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4)  then  ! land ice
-               snl_btm                   = nlevice  ! 15 ice layers
-               kfrsnl                    = 1        ! layer 1 is always going to be the first ice layer
-               mu0n                      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
-               lnd_ice = 1
-           else 
-              snl_btm   = 0  
-              kfrsnl = 15 
-              lnd_ice = 0
-           endif
+
+              if ( (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4) .and. (use_snicar_lndice) ) then  ! land ice
+                 write (iulog,*) "CAW c",c_idx,"use_snicar_lndice",use_snicar_lndice
+                 write (iulog,*) "CAW c",c_idx,"lun_pp%itype(l_idx)",lun_pp%itype(l_idx)
+                 snl_btm                   = nlevice  ! 15 ice layers
+                 kfrsnl                    = 1        ! layer 1 is always going to be the first ice layer
+                 mu0n                      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
+                 lnd_ice = 1
+              else 
+                 snl_btm   = 0  
+                 kfrsnl = 15 
+                 lnd_ice = 0
+              endif
           ! +CAW - end
 
           ! Zero absorbed radiative fluxes:
@@ -3133,15 +3136,14 @@ contains
                      write (iulog,*) "CAW c",c_idx,"landtype= ", sfctype
                      write (iulog,*) "CAW c",c_idx,"coszen= ", coszen(c_idx), " flg_slr= ", flg_slr_in
                      do i=snl_top,snl_btm,1
-                      write(iulog,*) "CAW c",c_idx,"bnd","layer",i,"snw_rds",snw_rds_lcl(i)
-                      write(iulog,*) "CAW c",c_idx,"soot1(0)=", mss_cnc_aer_lcl(i,1)
-                      write(iulog,*) "CAW c",c_idx,"soot2(0)= ", mss_cnc_aer_lcl(i,2)
-                      write(iulog,*) "CAW c",c_idx,"dust1(0)= ", mss_cnc_aer_lcl(i,3)
-                      write(iulog,*) "CAW c",c_idx," dust2(0)= ", mss_cnc_aer_lcl(i,4)
-                      write(iulog,*) "CAW c",c_idx,"dust3(0)= ", mss_cnc_aer_lcl(i,5)
-                      write(iulog,*) "CAW c",c_idx," dust4(0)= ", mss_cnc_aer_lcl(i,6)
-                      write (iulog,*) "CAW c",c_idx,"L_snw(i)= ", L_snw(i)
-                      write (iulog,*) "CAW c",c_idx,"snw_rds(i)= ", snw_rds(c_idx,i)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"snw_rds",snw_rds_lcl(i)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"soot1", mss_cnc_aer_lcl(i,1)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"soot2", mss_cnc_aer_lcl(i,2)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"dust1", mss_cnc_aer_lcl(i,3)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"dust2", mss_cnc_aer_lcl(i,4)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"dust3", mss_cnc_aer_lcl(i,5)
+                      write(iulog,*) "CAW c",c_idx,"i",i,"dust4", mss_cnc_aer_lcl(i,6)
+                      write (iulog,*) "CAW c",c_idx,"i",i,"L_snw", L_snw(i)
 
 
                      !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_ice",h2osno_ice_lcl(i)

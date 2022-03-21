@@ -794,7 +794,10 @@ sub setup_cmdl_fates_mode {
                      "use_fates_planthydro", "use_fates_ed_st3", "use_fates_ed_prescribed_phys",
 		     "use_fates_inventory_init", "use_fates_fixed_biogeog", "use_fates_nocomp","use_fates_sp",
                      "fates_inventory_ctrl_filename","use_fates_logging", "use_fates_tree_damage",
-		     "use_fates_parteh_mode","use_fates_cohort_age_tracking","use_snicar_ad");
+		     "use_fates_parteh_mode","use_fates_cohort_age_tracking","use_snicar_ad","use_snicar_lndice");
+                     "use_fates_planthydro", "use_fates_ed_st3", "use_fates_ed_prescribed_phys", 
+		     "use_fates_inventory_init", "use_fates_fixed_biogeog", "fates_inventory_ctrl_filename","use_fates_logging",
+		     "use_fates_parteh_mode","use_fates_cohort_age_tracking","use_snicar_ad","use_snicar_lndice");
       foreach my $var ( @list ) {
 	  if ( defined($nl->get_value($var))  ) {
 	      $nl_flags->{$var} = $nl->get_value($var);
@@ -2383,6 +2386,7 @@ sub setup_logic_demand {
   $settings{'use_lch4'}            = $nl_flags->{'use_lch4'};
   $settings{'use_vertsoilc'}       = $nl_flags->{'use_vertsoilc'};
   $settings{'use_snicar_ad'}       = $nl_flags->{'use_snicar_ad'};
+  $settings{'use_snicar_lndice'}   = $nl_flags->{'use_snicar_lndice'};
   $settings{'use_century_decomp'}  = $nl_flags->{'use_century_decomp'};
   $settings{'use_crop'}            = $nl_flags->{'use_crop'};
   
