@@ -2270,13 +2270,15 @@ contains
                  snl_btm   = 0  
                  kfrsnl = 15 
                  lnd_ice = 0
+                 bare_ice_albout(c_idx,:) = 0._r8
               endif
           ! +CAW - end
 
           ! Zero absorbed radiative fluxes:
           do i=-nlevsno+1,snl_btm+1,1 !+CAW - extend total # of layers
              flx_abs_lcl(i,:)   = 0._r8
-             flx_sum2(i)        = 0._r8 
+             flx_sum2(i)        = 0._r8
+             mss_cnc_aer_lcl(i,:) = 0._r8 
           !   flx_abs(c_idx,i,:) = 0._r8
           enddo
           !+CAW - seperate out the flx variable that is used elsewhere in the model -- temp 
@@ -2378,14 +2380,15 @@ contains
            rds_bcint_lcl(:)  =  100._r8
            rds_bcext_lcl(:)  =  100._r8
            !mgf--
-#endif
-
+#endif 
              ! Set local aerosol array
              do j=1,sno_nbr_aer
-                mss_cnc_aer_lcl(:,j) = mss_cnc_aer_in(c_idx,:,j)
+                mss_cnc_aer_lcl(-nlevsno+1:0,j) = mss_cnc_aer_in(c_idx,:,j)
+                !write (iulog,*) "CAW c",c_idx, "j",j,"mss_cnc_aer_lcl", mss_cnc_aer_lcl(:,j)
              enddo
 
-
+             !write (iulog,*) "CAW c",c_idx," albsfc(c_idx,1)", albsfc(c_idx,1)
+             !write (iulog,*) "CAW c",c_idx," albsfc(c_idx,2)", albsfc(c_idx,2)
              ! Set spectral underlying surface albedos to their corresponding VIS or NIR albedos
              albsfc_lcl(1)                       = albsfc(c_idx,1)
              albsfc_lcl(nir_bnd_bgn:nir_bnd_end) = albsfc(c_idx,2)

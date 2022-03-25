@@ -34,7 +34,7 @@ module SurfaceAlbedoMod
   use topounit_varcon   , only : max_topounits  
   use TopounitType      , only : top_pp
 
-  use clm_time_manager , only : get_nstep ! +CAW 
+  !use clm_time_manager , only : get_nstep ! +CAW 
   !
   implicit none
   save
@@ -115,8 +115,8 @@ contains
     type(surfalb_type)     , intent(inout) :: surfalb_vars
     !
     ! !LOCAL VARIABLES:
-    integer :: bare_ice       (bounds%begc:bounds%endc)                     ! flag variable for bare ice CAW
-    integer :: nstep                              ! current timestep [nbr] (debugging only) +CAW
+    !integer :: bare_ice       (bounds%begc:bounds%endc)                     ! flag variable for bare ice CAW
+    !integer :: nstep                              ! current timestep [nbr] (debugging only) +CAW
     integer  :: i                                                                         ! index for layers [idx]
     integer  :: aer                                                                       ! index for sno_nbr_aer
     real(r8) :: extkn                      ! nitrogen allocation coefficient
@@ -277,13 +277,6 @@ contains
           albgri_oc(c,ib)  = 0._r8
           albgrd_dst(c,ib) = 0._r8
           albgri_dst(c,ib) = 0._r8
-          !if (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4)  then   !+CAW
-          !        write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
-          !        bare_ice(c) = 1
-          !        write(iulog,*)"CAW SURFALB c",c,"bare_ice",bare_ice
-          !else
-          !        nlevice = 0
-          !endif
           nlevice = 0
           do i=-nlevsno+1,nlevice+1,1 !+CAW
              flx_absdv(c,i) = 0._r8
@@ -701,7 +694,7 @@ contains
        endif ! end if use_snicar_ad
 
       ! Get current timestep  ! +CAW
-        nstep = get_nstep()   ! +CAW
+      !  nstep = get_nstep()   ! +CAW
     
    ! ground albedos and snow-fraction weighting of snow absorption factors
     do ib = 1, nband
@@ -710,7 +703,8 @@ contains
              if (coszen_col(c) > 0._r8) then
  
              if ( (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4) .and. (use_snicar_lndice) ) then   !+CAW
-                write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
+         !       write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
+                write (iulog,*) "CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
                 write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
                 write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
                 write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)",albsoi(c,ib)
@@ -1135,19 +1129,8 @@ contains
                 albsoi(c,ib) = albsod(c,ib)
              else if (lun_pp%itype(l) == istice .or. lun_pp%itype(l) == istice_mec .and. top_pp%active(t))  then  ! land ice
                 ! changed from local variable to clm_type:
-                !albsod = albice(ib)
-                !albsoi = albsod
-                !if (snl(c) == 0) then             !+CAW 
-                !   albsod(c,ib) = albsnd(c,ib)    !+CAW 
-                !   albsoi(c,ib) = albsni(c,ib)    !+CAW 
-                !else                              !+CAW 
-                !   albsod(c,ib) = albice(ib)      !+CAW 
-                !   albsoi(c,ib) = albsod(c,ib)    !+CAW 
-                !endif                             !+CAW 
                 albsod(c,ib) = albice(ib)
                 albsoi(c,ib) = albsod(c,ib)
-                write(iulog,*)"CAW SURFALB2 c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))
-                write(iulog,*)"CAW SURFALB2 c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
              ! unfrozen lake, wetland
              else if (t_grnd(c) > tfrz .or. (lakepuddling .and. lun_pp%itype(l) == istdlak .and. t_grnd(c) == tfrz .and. &
                       lake_icefrac(c,1) < 1._r8 .and. lake_icefrac(c,2) > 0._r8)  .and. top_pp%active(t)) then
