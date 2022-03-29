@@ -1817,7 +1817,7 @@ contains
      use elm_time_manager , only : get_nstep
      use shr_const_mod    , only : SHR_CONST_PI
      use elm_varctl       , only : snow_shape, snicar_atm_type, use_dust_snow_internal_mixing, use_snicar_lndice
-     !
+    
      ! !ARGUMENTS:
      integer           , intent(in)  :: flg_snw_ice                                        ! flag: =1 when called from CLM, =2 when called from CSIM
      type (bounds_type), intent(in)  :: bounds
@@ -1841,8 +1841,7 @@ contains
      ! variables for snow radiative transfer calculations
 
 
-     integer,  parameter :: nlevice = 15                 ! +CAW 
-    ! logical,  public, parameter :: use_iceRT = .true.   ! +CAW - used for testing rn 
+     integer, parameter :: nlevice = 15                 ! +CAW  
 
      ! Local variables representing single-column values of arrays:
      integer :: snl_lcl                                  ! negative number of snow layers [nbr]
@@ -2056,7 +2055,7 @@ contains
      real(r8), parameter :: &
          refindx = 1.310_r8 , & ! refractive index of sea ice (water also)
          cp063   = 0.063_r8 , & ! diffuse fresnel reflectivity from above
-         cp455   = 0.455_r8      ! diffuse fresnel reflectivity from below
+         cp455   = 0.455_r8      ! diffuse fresnel reflectivity from belowmu0n
      !+CAW parameters for FL - end
 
      ! Gaussian integration angle and coefficients
@@ -2248,7 +2247,6 @@ contains
        do fc = 1,num_nourbanc
           c_idx = filter_nourbanc(fc)
           
-         write(iulog,*) "CAW c",c_idx,"START SNICAR" 
          ! set snow/ice mass to be used for RT:
           if (flg_snw_ice == 1) then
              h2osno_lcl = h2osno(c_idx)
@@ -2268,9 +2266,10 @@ contains
                  lnd_ice = 1
               else 
                  snl_btm   = 0  
-                 kfrsnl = 15 
+                 kfrsnl = 15  ! special value for real data 
                  lnd_ice = 0
-                 bare_ice_albout(c_idx,:) = 0._r8
+                 bare_ice_albout(c_idx,:) = 0._r8 ! special value for real data
+                 mu0n = 0._r8  ! special value for real data 
               endif
           ! +CAW - end
 
@@ -2331,19 +2330,19 @@ contains
                   snw_rds_lcl(:)    =  snw_rds(c_idx,:)
                 endif
                
-                write(iulog,*) "CAW c",c_idx,"flg_nosnl",flg_nosnl
-                write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
-                write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)
-                write(iulog,*) "CAW c",c_idx,"snl_btm",snl_btm
+              !  write(iulog,*) "CAW c",c_idx,"flg_nosnl",flg_nosnl
+              !  write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
+              !  write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)
+              !  write(iulog,*) "CAW c",c_idx,"snl_btm",snl_btm
 
                 h2osoi_liq_lcl(:) = h2osoi_liq(c_idx,:) ! +CAW
                 h2osoi_ice_lcl(:) = h2osoi_ice(c_idx,:) ! +CAW
-                
-                snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
-                dz_lcl(:)                 = dz(c_idx,:) !+CAW
-                h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
-                h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
-                
+                dz_lcl(:)                 = dz(c_idx,:) !+CAW 
+                if ( (use_snicar_lndice).and. (lnd_ice ==1) ) then 
+                   snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
+                   h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
+                   h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
+                endif
 
                 !snl_btm   = 0
                 snl_top   = snl_lcl+1
@@ -2858,7 +2857,7 @@ contains
                      ! of radiation to the interface just above the layer exceeds trmin.
 
                      if (trntdr(i) > trmin ) then
-                             write (iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"min trans met sno",trntdr(i) > trmin
+                             !write (iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"min trans met sno",trntdr(i) > trmin
 
                         ! calculation over layers with penetrating radiation
 
@@ -3052,7 +3051,7 @@ contains
                       rupdir(snl_btm_itf) = albsfc(c_idx,1)
                       rupdif(snl_btm_itf) = albsfc(c_idx,1)
                   endif
-                  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc(c_idx,1:2)
+                  !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc(c_idx,1:2)
 
                   do i=snl_btm,snl_top,-1
                      ! interface scattering
@@ -3133,20 +3132,20 @@ contains
                     !endif
                   endif
 
-               !   if (isnan(albedo)) then
-                 if (kfrsnl==1) then
-                     write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo=", albedo
-                     write (iulog,*) "CAW c",c_idx,"landtype= ", sfctype
-                     write (iulog,*) "CAW c",c_idx,"coszen= ", coszen(c_idx), " flg_slr= ", flg_slr_in
-                     do i=snl_top,snl_btm,1
-                      write(iulog,*) "CAW c",c_idx,"i",i,"snw_rds",snw_rds_lcl(i)
-                      write(iulog,*) "CAW c",c_idx,"i",i,"soot1", mss_cnc_aer_lcl(i,1)
-                      write(iulog,*) "CAW c",c_idx,"i",i,"soot2", mss_cnc_aer_lcl(i,2)
-                      write(iulog,*) "CAW c",c_idx,"i",i,"dust1", mss_cnc_aer_lcl(i,3)
-                      write(iulog,*) "CAW c",c_idx,"i",i,"dust2", mss_cnc_aer_lcl(i,4)
-                      write(iulog,*) "CAW c",c_idx,"i",i,"dust3", mss_cnc_aer_lcl(i,5)
-                      write(iulog,*) "CAW c",c_idx,"i",i,"dust4", mss_cnc_aer_lcl(i,6)
-                      write (iulog,*) "CAW c",c_idx,"i",i,"L_snw", L_snw(i)
+                 if (isnan(albedo)) then
+                 !if (kfrsnl==1) then
+                    ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo=", albedo
+                    ! write (iulog,*) "CAW c",c_idx,"landtype= ", sfctype
+                    ! write (iulog,*) "CAW c",c_idx,"coszen= ", coszen(c_idx), " flg_slr= ", flg_slr_in
+                    ! do i=snl_top,snl_btm,1
+                    !  write(iulog,*) "CAW c",c_idx,"i",i,"snw_rds",snw_rds_lcl(i)
+                    !  write(iulog,*) "CAW c",c_idx,"i",i,"soot1", mss_cnc_aer_lcl(i,1)
+                    !  write(iulog,*) "CAW c",c_idx,"i",i,"soot2", mss_cnc_aer_lcl(i,2)
+                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust1", mss_cnc_aer_lcl(i,3)
+                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust2", mss_cnc_aer_lcl(i,4)
+                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust3", mss_cnc_aer_lcl(i,5)
+                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust4", mss_cnc_aer_lcl(i,6)
+                     ! write (iulog,*) "CAW c",c_idx,"i",i,"L_snw", L_snw(i)
 
 
                      !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_ice",h2osno_ice_lcl(i)
@@ -3160,9 +3159,9 @@ contains
                      !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ss_alb_s",ss_alb_snw_lcl(i)
                      !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw",L_snw(i)
                      !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau",tau_snw(i)
-                      enddo
+                     ! enddo
                       !call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
-                  endif 
+                 endif 
 
                   ! Absorbed flux in each layer
                   do i=snl_top,snl_btm,1
@@ -3282,10 +3281,15 @@ contains
              
              ! Weight output NIR absorbed layer fluxes (flx_abs) appropriately
              !flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
-             flx_abs(c_idx,-nlevsno+1:0,1) = flx_abs_lcl(-nlevsno+1:0,1)
-             flx_abs(c_idx,1,1) = sum(flx_abs_lcl(1:snl_btm,1))
-             
-             do i=snl_top,snl_btm,1 
+
+             if ( (use_snicar_lndice) .and. (lnd_ice ==1) ) then
+                flx_abs(c_idx,-nlevsno+1:0,1) = flx_abs_lcl(-nlevsno+1:0,1)
+                flx_abs(c_idx,1,1) = sum(flx_abs_lcl(1:snl_btm,1))
+             else
+                flx_abs(c_idx,:,1) = flx_abs_lcl(:,1)
+             endif
+
+             do i=snl_top,snl_btm+1,1 
                 flx_sum = 0._r8
                 flx_sum2(i) = 0._r8
                 do bnd_idx= nir_bnd_bgn,nir_bnd_end
@@ -3303,8 +3307,14 @@ contains
                 !  write(iulog,*) "CAW c",c_idx,"i",i,"flx_abs(2)",flx_abs(c_idx,i,2)
                 !endif
              enddo 
-             flx_abs(c_idx, -nlevsno+1:0, 2) = flx_sum2(-nlevsno+1:0)
-             flx_abs(c_idx, 1, 2) = sum(flx_sum2(1:snl_btm))
+             !flx_abs(c_idx, -nlevsno+1:0, 2) = flx_sum2(-nlevsno+1:0)
+             
+             if ( (use_snicar_lndice) .and. (lnd_ice ==1) ) then
+                flx_abs(c_idx, -nlevsno+1:0, 2) = flx_sum2(-nlevsno+1:0)
+                flx_abs(c_idx, 1, 2) = sum(flx_sum2(1:snl_btm))
+             else 
+                flx_abs(c_idx, -nlevsno+1:1, 2) = flx_sum2(-nlevsno+1:1)   
+             endif
              
 
 
@@ -3348,7 +3358,6 @@ contains
              endif
         
           ! If snow < minimum_snow, but > 0, and there is sun, set albedo to underlying surface albedo
-          !elseif ( (coszen(c_idx) > 0._r8) .and. (h2osno_lcl < min_snw) .and. (h2osno_lcl > 0._r8) .and. (kfrsnl == 15) ) then !+CAW
           elseif ( (coszen(c_idx) > 0._r8) .and. (h2osno_lcl < min_snw) .and. (h2osno_lcl > 0._r8) ) then
              albout(c_idx,1) = albsfc(c_idx,1)
              albout(c_idx,2) = albsfc(c_idx,2)
@@ -3360,12 +3369,12 @@ contains
           endif    ! if column has snow and coszen > 0
        
 
-        if ( (coszen(c_idx) > 0._r8) .and. (lnd_ice ==1) ) then
+       if ( (coszen(c_idx) > 0._r8) .and. (lnd_ice ==1) ) then
                   snl_lcl           =  0  
                   h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
                   h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
                   snw_rds_lcl(:)    =  snw_rds(c_idx,:)
-               
+                write(iulog,*) "CAW c",c_idx,"bare ice calculations START" 
                 write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
                 write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)
 
@@ -3404,7 +3413,7 @@ contains
 
              ! Set local aerosol array
              do j=1,sno_nbr_aer
-                mss_cnc_aer_lcl(:,j) = mss_cnc_aer_in(c_idx,:,j)
+                mss_cnc_aer_lcl(:,j) = 0._r8!mss_cnc_aer_in(c_idx,:,j)
              enddo
 
 
@@ -4033,8 +4042,8 @@ contains
                     !endif
                   endif
 
-                  if (isnan(albedo)) then
-               !  if (kfrsnl==1) then
+               !   if (isnan(albedo)) then
+                 if (kfrsnl==1) then
                      write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo=", albedo
                      do i=snl_top,snl_btm,1
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"snw_rds",snw_rds_lcl(i)
@@ -4049,6 +4058,7 @@ contains
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ss_alb_s",ss_alb_snw_lcl(i)
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw",L_snw(i)
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau",tau_snw(i)
+                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"mss_cnc_aer_lcl",mss_cnc_aer_lcl(i,:)
                       enddo
                       !call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
                   endif 
@@ -4075,54 +4085,54 @@ contains
                     endif
                   enddo
 
-                  ! absobed flux by the underlying ground
-                  F_btm_net = dftmp(snl_btm_itf)
-
-                  ! note here, snl_btm_itf = 1 by snow column set up in CLM
-                  flx_abs_lcl(snl_btm,bnd_idx) = F_btm_net ! +CAW
-
-                 if (flg_nosnl == 1) then
-                    ! If there are no snow layers (but still snow), all absorbed energy must be in top soil layer
-                    !flx_abs_lcl(:,bnd_idx) = 0._r8
-                    !flx_abs_lcl(1,bnd_idx) = F_abs(0) + F_btm_net
-
-                    ! changed on 20070408:
-                    ! OK to put absorbed energy in the fictitous snow layer because routine SurfaceRadiation
-                    ! handles the case of no snow layers. Then, if a snow layer is addded between now and
-                    ! SurfaceRadiation (called in CanopyHydrology), absorbed energy will be properly distributed.
-                    flx_abs_lcl(0,bnd_idx) = F_abs(0) 
-                    flx_abs_lcl(1,bnd_idx) = F_btm_net 
-                 endif
-
-                 !Underflow check (we've already tripped the error condition above)
-                 do i=snl_top,snl_btm,1 !+CAW changed to snl btm
-                 if (flx_abs_lcl(i,bnd_idx) < 0._r8) then
-                       flx_abs_lcl(i,bnd_idx) = 0._r8
-                    endif
-                 enddo
-
-                 F_abs_sum = 0._r8
-                 do i=snl_top,snl_btm,1
-                    F_abs_sum = F_abs_sum + F_abs(i)
-                 enddo
-
-
-                ! Energy conservation check:
-                ! Incident direct+diffuse radiation equals (absorbed+bulk_transmitted+bulk_reflected)
-                energy_sum = (mu_not*pi*flx_slrd_lcl(bnd_idx)) + flx_slri_lcl(bnd_idx) - (F_abs_sum + F_btm_net + F_sfc_pls)
-                if (abs(energy_sum) > 0.00001_r8) then
-                   write (iulog,"(a,e13.6,a,i6,a,i6)") "SNICAR ERROR: Energy conservation error of : ", energy_sum, &
-                        " at timestep: ", nstep, " at column: ", c_idx
-                   write(iulog,*) "F_abs_sum: ",F_abs_sum
-                   write(iulog,*) "F_btm_net: ",F_btm_net
-                   write(iulog,*) "F_sfc_pls: ",F_sfc_pls
-                   write(iulog,*) "mu_not*pi*flx_slrd_lcl(bnd_idx): ", mu_not*pi*flx_slrd_lcl(bnd_idx)
-                   write(iulog,*) "flx_slri_lcl(bnd_idx)", flx_slri_lcl(bnd_idx)
-                   write(iulog,*) "bnd_idx", bnd_idx
-                   write(iulog,*) "F_abs", F_abs
-                   write(iulog,*) "albedo", albedo
-                   call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
-                endif
+!                  ! absobed flux by the underlying ground
+!                  F_btm_net = dftmp(snl_btm_itf)
+!
+!                  ! note here, snl_btm_itf = 1 by snow column set up in CLM
+!                  flx_abs_lcl(snl_btm,bnd_idx) = F_btm_net ! +CAW
+!
+!                 if (flg_nosnl == 1) then
+!                    ! If there are no snow layers (but still snow), all absorbed energy must be in top soil layer
+!                    !flx_abs_lcl(:,bnd_idx) = 0._r8
+!                    !flx_abs_lcl(1,bnd_idx) = F_abs(0) + F_btm_net
+!
+!                    ! changed on 20070408:
+!                    ! OK to put absorbed energy in the fictitous snow layer because routine SurfaceRadiation
+!                    ! handles the case of no snow layers. Then, if a snow layer is addded between now and
+!                    ! SurfaceRadiation (called in CanopyHydrology), absorbed energy will be properly distributed.
+!                    flx_abs_lcl(0,bnd_idx) = F_abs(0) 
+!                    flx_abs_lcl(1,bnd_idx) = F_btm_net 
+!                 endif
+!
+!                 !Underflow check (we've already tripped the error condition above)
+!                 do i=snl_top,snl_btm,1 !+CAW changed to snl btm
+!                 if (flx_abs_lcl(i,bnd_idx) < 0._r8) then
+!                       flx_abs_lcl(i,bnd_idx) = 0._r8
+!                    endif
+!                 enddo
+!
+!                 F_abs_sum = 0._r8
+!                 do i=snl_top,snl_btm,1
+!                    F_abs_sum = F_abs_sum + F_abs(i)
+!                 enddo
+!
+!
+!                ! Energy conservation check:
+!                ! Incident direct+diffuse radiation equals (absorbed+bulk_transmitted+bulk_reflected)
+!                energy_sum = (mu_not*pi*flx_slrd_lcl(bnd_idx)) + flx_slri_lcl(bnd_idx) - (F_abs_sum + F_btm_net + F_sfc_pls)
+!                if (abs(energy_sum) > 0.00001_r8) then
+!                   write (iulog,"(a,e13.6,a,i6,a,i6)") "SNICAR ERROR: Energy conservation error of : ", energy_sum, &
+!                        " at timestep: ", nstep, " at column: ", c_idx
+!                   write(iulog,*) "F_abs_sum: ",F_abs_sum
+!                   write(iulog,*) "F_btm_net: ",F_btm_net
+!                   write(iulog,*) "F_sfc_pls: ",F_sfc_pls
+!                   write(iulog,*) "mu_not*pi*flx_slrd_lcl(bnd_idx): ", mu_not*pi*flx_slrd_lcl(bnd_idx)
+!                   write(iulog,*) "flx_slri_lcl(bnd_idx)", flx_slri_lcl(bnd_idx)
+!                    write(iulog,*) "bnd_idx", bnd_idx
+!                   write(iulog,*) "F_abs", F_abs
+!                   write(iulog,*) "albedo", albedo
+!                   call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+!                endif
 
                 albout_lcl(bnd_idx) = albedo
                 ! Check that albedo is less than 1
@@ -4172,7 +4182,7 @@ contains
 
 
        else
-              bare_ice_albout(c_idx,:) = 1.e36_r8
+              bare_ice_albout(c_idx,:) = 0._r8
 
               !write(iulog,*) "CAW c",c_idx,"bare_ice_albout(c_idx,1)",bare_ice_albout(c_idx,1) 
               !write(iulog,*) "CAW c",c_idx,"bare_ice_albout(c_idx,2)",bare_ice_albout(c_idx,2)
