@@ -2258,8 +2258,8 @@ contains
           ! +CAW - start
 
               if ( (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4) .and. (use_snicar_lndice) ) then  ! land ice
-                 write (iulog,*) "CAW c",c_idx,"use_snicar_lndice",use_snicar_lndice
-                 write (iulog,*) "CAW c",c_idx,"lun_pp%itype(l_idx)",lun_pp%itype(l_idx)
+                 !write (iulog,*) "CAW c",c_idx,"use_snicar_lndice",use_snicar_lndice
+                 !write (iulog,*) "CAW c",c_idx,"lun_pp%itype(l_idx)",lun_pp%itype(l_idx)
                  snl_btm                   = nlevice  ! 15 ice layers
                  kfrsnl                    = 1        ! layer 1 is always going to be the first ice layer
                  mu0n                      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
@@ -3320,12 +3320,12 @@ contains
 
 
              ! debugging loop 
-             if (kfrsnl == 1) then
-                write(iulog,*)"CAW c",c_idx,"nstep",nstep
-                write(iulog,*)"CAW c",c_idx,"albout(c_idx,1)",albout(c_idx,1)
-                write(iulog,*)"CAW c",c_idx,"albout(c_idx,2)",albout(c_idx,2)
-                write(iulog,*)"CAW c",c_idx,"flx_abs(c_idx,:,1)",flx_abs(c_idx,:,1)
-                write(iulog,*)"CAW c",c_idx,"flx_abs(c_idx,:,2)",flx_abs(c_idx,:,2)
+          !   if (kfrsnl == 1) then
+          !      write(iulog,*)"CAW c",c_idx,"nstep",nstep
+          !      write(iulog,*)"CAW c",c_idx,"albout(c_idx,1)",albout(c_idx,1)
+          !      write(iulog,*)"CAW c",c_idx,"albout(c_idx,2)",albout(c_idx,2)
+          !      write(iulog,*)"CAW c",c_idx,"flx_abs(c_idx,:,1)",flx_abs(c_idx,:,1)
+          !      write(iulog,*)"CAW c",c_idx,"flx_abs(c_idx,:,2)",flx_abs(c_idx,:,2)
            !     write(iulog,*)"CAW c",c_idx,"flx_abs_lcl(:,1)",flx_abs_lcl(:,1)
            !     write(iulog,*)"CAW c",c_idx,"flx_abs_lcl(:,2)",flx_abs_lcl(:,2)
            !     write(iulog,*)"CAW c",c_idx,"flx_abs_lcl(:,3)",flx_abs_lcl(:,3)
@@ -3339,7 +3339,7 @@ contains
             !         write(iulog,*) "CAW c",c_idx,"i",i,"flx_abs(c_idx,i,1)",flx_abs(c_idx,i,1)
             !         write(iulog,*) "CAW c",c_idx,"i",i,"flx_abs(c_idx,i,2)",flx_abs(c_idx,i,2)
             !    enddo
-             endif
+           !  endif
             ! write (iulog,*) "CAW c_idx = ", c_idx, "CAW flx_abs = ",flx_abs(c_idx,:,1)
             ! write (iulog,*) "CAW c_idx = ", c_idx,"CAW flx_abs_lcl = ",flx_abs_lcl(:,1)
 
@@ -3374,9 +3374,9 @@ contains
                   h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
                   h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
                   snw_rds_lcl(:)    =  snw_rds(c_idx,:)
-                write(iulog,*) "CAW c",c_idx,"bare ice calculations START" 
-                write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
-                write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)
+                !write(iulog,*) "CAW c",c_idx,"bare ice calculations START" 
+                !write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
+                !write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)
 
                 h2osoi_liq_lcl(:) = h2osoi_liq(c_idx,:) ! +CAW
                 h2osoi_ice_lcl(:) = h2osoi_ice(c_idx,:) ! +CAW
@@ -3767,7 +3767,7 @@ contains
                      ! of radiation to the interface just above the layer exceeds trmin.
 
                      if (trntdr(i) > trmin ) then
-                             write (iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"min trans met ice",trntdr(i) > trmin
+                             !write (iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"min trans met ice",trntdr(i) > trmin
 
                         ! calculation over layers with penetrating radiation
 
@@ -3961,7 +3961,7 @@ contains
                       rupdir(snl_btm_itf) = albsfc(c_idx,1)
                       rupdif(snl_btm_itf) = albsfc(c_idx,1)
                   endif
-                  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc(c_idx,1:2)
+                  !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"albsfc",albsfc(c_idx,1:2)
 
                   do i=snl_btm,snl_top,-1
                      ! interface scattering
@@ -4042,8 +4042,8 @@ contains
                     !endif
                   endif
 
-               !   if (isnan(albedo)) then
-                 if (kfrsnl==1) then
+                  if (isnan(albedo)) then
+                 ! if (kfrsnl==1) then
                      write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo=", albedo
                      do i=snl_top,snl_btm,1
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"snw_rds",snw_rds_lcl(i)

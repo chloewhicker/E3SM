@@ -115,7 +115,6 @@ contains
     type(surfalb_type)     , intent(inout) :: surfalb_vars
     !
     ! !LOCAL VARIABLES:
-    !integer :: bare_ice       (bounds%begc:bounds%endc)                     ! flag variable for bare ice CAW
     !integer :: nstep                              ! current timestep [nbr] (debugging only) +CAW
     integer  :: i                                                                         ! index for layers [idx]
     integer  :: aer                                                                       ! index for sno_nbr_aer
@@ -159,9 +158,6 @@ contains
     real(r8) :: foo_alb         (bounds%begc:bounds%endc,numrad)                         ! dummy array for ice albedo + CAW 
     real(r8) :: albicd          (bounds%begc:bounds%endc,numrad)                         ! direct ice albedo + CAW 
     real(r8) :: albici          (bounds%begc:bounds%endc,numrad)                         ! direct ice albedo + CAW 
-    !real(r8) :: flx_absd_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (direct) [frc]
-    !real(r8) :: flx_absi_snw    (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)             ! flux absorption factor for just snow (diffuse) [frc]
-    !real(r8) :: foo_snw         (bounds%begc:bounds%endc,-nlevsno+1:15+1,numrad)          ! dummy array for forcing calls +CAW -extend length to add glacier ice lyrs
     real(r8) :: h2osno_liq      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! liquid snow content (col,lyr) [kg m-2]
     real(r8) :: h2osno_ice      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! ice content in snow (col,lyr) [kg m-2]
     integer  :: snw_rds_in      (bounds%begc:bounds%endc,-nlevsno+1:0)                    ! snow grain size sent to SNICAR (col,lyr) [microns]
@@ -171,7 +167,7 @@ contains
     real(r8) :: mss_cnc_aer_in_frc_dst (bounds%begc:bounds%endc,-nlevsno+1:0,sno_nbr_aer) ! mass concentration of aerosol species for dust forcing (col,lyr,aer) [kg kg-1]
     real(r8) :: mss_cnc_aer_in_fdb     (bounds%begc:bounds%endc,-nlevsno+1:0,sno_nbr_aer) ! mass concentration of all aerosol species for feedback calculation (col,lyr,aer) [kg kg-1]
     real(r8), parameter :: mpe = 1.e-06_r8                                                ! prevents overflow for division by zero
-    integer ::  nlevice                                                  ! number of glaicer ice levels +CAW
+    integer ::  nlevice                                                                   ! number of glaicer ice levels +CAW
     integer , parameter :: nband =numrad                                                  ! number of solar radiation waveband classes
   !-----------------------------------------------------------------------
 
@@ -330,7 +326,7 @@ contains
        albsfc(c,:)     = albsoi(c,:)
       h2osno_liq(c,:) = h2osoi_liq(c,-nlevsno+1:0)
       h2osno_ice(c,:) = h2osoi_ice(c,-nlevsno+1:0)
-      ! h2osno_liq(c,:) = h2osoi_liq(c,:) !+CAW extend to include glacier lyrs
+      ! h2osno_liq(c,:) = h2osoi_liq(c,:) !+CAW extend to include glacier lyrs TODO - change the # of h2osno_liq to 15 in 
       ! h2osno_ice(c,:) = h2osoi_ice(c,:) !+CAW extend to include glacier lyrs
        snw_rds_in(c,:) = nint(snw_rds(c,:))
     end do
@@ -704,18 +700,18 @@ contains
  
              if ( (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4) .and. (use_snicar_lndice) ) then   !+CAW
          !       write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
-                write (iulog,*) "CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
-                write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)",albsoi(c,ib)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"frac_sno(c)",frac_sno(c)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albici(c,ib)",albici(c,ib)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albicd(c,ib)",albicd(c,ib)
+             !   write (iulog,*) "CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
+             !   write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
+             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
+             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)",albsoi(c,ib)
+             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib,"frac_sno(c)",frac_sno(c)
+             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albici(c,ib)",albici(c,ib)
+             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albicd(c,ib)",albicd(c,ib)
 
                 albsod(c,ib) = albicd(c,ib)
                 albsoi(c,ib) = albici(c,ib)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)-chd",albsod(c,ib)
-                write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)-chd",albsoi(c,ib)
+              !  write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)-chd",albsod(c,ib)
+              !  write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)-chd",albsoi(c,ib)
              endif
                
 
@@ -771,7 +767,6 @@ contains
                    flx_absin(c,i) = flx_absi_snw(c,i,ib)*(1.-albsni(c,ib))
                    
                 endif
-                !write (iulog,*) "CAW SURFALB c",c,"i",i,"flx_absdn",flx_absdn(c,i)
              endif
              enddo
           endif
