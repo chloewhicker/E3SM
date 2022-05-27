@@ -152,7 +152,8 @@ contains
 
     namelist /elm_inparm/  &
          fsurdat, fatmtopo, flndtopo, &
-         paramfile, fsnowoptics, fsnowaging,fsoilordercon
+         paramfile, fsnowoptics, fsnowaging,fsoilordercon,&
+         ficephyprop !CAW
 
 
     ! History, restart options
@@ -736,8 +737,8 @@ contains
     call mpi_bcast (use_crop, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_voc, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_snicar_frc, 1, MPI_LOGICAL, 0, mpicom, ier)
-    call mpi_bcast (use_snicar_ad, 1, MPI_LOGICAL, 0, mpicom, ier)
-    call mpi_bcast (use_snicar_lndice, 1, MPI_LOGICAL, 0, mpicom, ier)  
+    call mpi_bcast (use_snicar_ad, 1, MPI_LOGICAL, 0, mpicom, ier) 
+    call mpi_bcast (use_snicar_lndice, 1, MPI_LOGICAL, 0, mpicom, ier)!+CAW  
     call mpi_bcast (use_vancouver, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_mexicocity, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_noio, 1, MPI_LOGICAL, 0, mpicom, ier)
@@ -759,6 +760,7 @@ contains
     call mpi_bcast (fsoilordercon, len(fsoilordercon) , MPI_CHARACTER, 0, mpicom, ier)
     call mpi_bcast (fsnowoptics, len(fsnowoptics),  MPI_CHARACTER, 0, mpicom, ier)
     call mpi_bcast (fsnowaging,  len(fsnowaging),   MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (ficephyprop, len(ficephyprop),  MPI_CHARACTER, 0, mpicom, ier) !+CAW
 
     ! Irrigation
     call mpi_bcast(irrigate, 1, MPI_LOGICAL, 0, mpicom, ier)
