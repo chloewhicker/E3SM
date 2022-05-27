@@ -55,6 +55,10 @@ module SnowSnicarMod
   integer,  parameter :: idx_rhos_max   = 8              ! maxiumum snow density index used in aging lookup table [idx]
   integer,  parameter :: idx_rhos_min   = 1              ! minimum snow density index used in aging lookup table [idx]
   integer,  parameter :: idx_Mie_ice_mx = 1515           ! number of effective radius indices used in Mie lookup table [idx]
+ 
+  integer,  parameter :: num_mons = 12
+  integer,  parameter :: num_lons = 144
+  integer,  parameter :: num_lats = 96 
   !$acc declare copyin(idx_Mie_snw_mx)
   !$acc declare copyin(idx_T_max     )
   !$acc declare copyin(idx_T_min     )
@@ -119,6 +123,10 @@ module SnowSnicarMod
   real(r8) :: ext_cff_mss_snw_drc(idx_Mie_snw_mx,numrad_snw);
   real(r8) :: sca_cff_vlm_airbbl(idx_Mie_ice_mx,numrad_snw); !+ CAW 
   real(r8) :: asm_prm_airbbl(idx_Mie_ice_mx,numrad_snw);     !+ CAW 
+  
+  
+  real(r8) :: ice_density(num_mons,num_lats,num_lons); !+ CAW 
+  real(r8) :: bbl_eff_rad(num_mons,num_lats,num_lons); !+ CAW 
 
   ! diffuse radiation weighted ice optical properties
   real(r8) :: ss_alb_snw_dfs     (idx_Mie_snw_mx,numrad_snw);
@@ -1485,7 +1493,7 @@ contains
      subroutine SnowOptics_init( )
 
       use fileutils  , only : getfil
-      use elm_varctl , only : fsnowoptics
+      use elm_varctl , only : fsnowoptics, ficephyprop
       use spmdMod    , only : masterproc
       use ncdio_pio  , only : file_desc_t, ncd_io, ncd_pio_openfile, ncd_pio_closefile
       use ncdio_pio  , only : ncd_pio_openfile, ncd_inqfdims, ncd_pio_closefile, ncd_inqdid, ncd_inqdlen
@@ -1494,6 +1502,9 @@ contains
       character(len=256) :: locfn                       ! local filename
       character(len= 32) :: subname = 'SnowOptics_init' ! subroutine name
       integer            :: ier                         ! error status
+      
+      type(file_desc_t)  :: ncid2                        ! netCDF file id  !CAW
+      character(len=256) :: locfn2                       ! local filename  !CAW
 
      !mgf++
      logical :: readvar      ! determine if variable was read from NetCDF file
@@ -1519,6 +1530,19 @@ contains
       call ncd_io( 'ss_alb_ice_dfs', ss_alb_snw_dfs,           'read', ncid, posNOTonfile=.true.)
       call ncd_io( 'asm_prm_ice_dfs', asm_prm_snw_dfs,         'read', ncid, posNOTonfile=.true.)
       call ncd_io( 'ext_cff_mss_ice_dfs', ext_cff_mss_snw_dfs, 'read', ncid, posNOTonfile=.true.)
+      
+      ! Open ice properties file 
+      if(masterproc) write(iulog,*) 'Attempting to read ice physical properties .....'
+      call getfil (ficephyprop, locfn2, 0)
+      call ncd_pio_openfile(ncid2, locfn2, 0)
+      if(masterproc) write(iulog,*) subname,trim(ficephyprop)
+
+      call ncd_io( 'ice_density', ice_density, 'read', ncid2, readvar=readvar, posNOTonfile=.true.)
+      call ncd_io( 'bbl_eff_rad', bbl_eff_rad, 'read', ncid2, readvar=readvar, posNOTonfile=.true.)
+      write(iulog,*) "CAW ice_density",ice_density(2,1,1)
+      write(iulog,*) "CAW ice_density",ice_density(3,1,1)
+      write(iulog,*) "CAW ice_density",ice_density(4,1,1)
+      write(iulog,*) "CAW ice_density",ice_density(5,1,1) 
       !$acc update device( &
       !$acc ss_alb_snw_drc     ,&
       !$acc asm_prm_snw_drc    ,&
@@ -1761,7 +1785,8 @@ contains
      ! !USES:
       !$acc routine seq
      use elm_varpar       , only : nlevsno, numrad
-     use clm_time_manager , only : get_nstep
+     use clm_time_manager , only : get_nstep, get_curr_calday
+     use timeinfoMod      , only : mon_curr ! CAW
      use shr_const_mod    , only : SHR_CONST_PI
      use elm_varctl       , only : use_snicar_lndice
      
@@ -1890,7 +1915,13 @@ contains
      real(r8):: lon_coord                          ! gridcell longitude (debugging only)
      integer :: sfctype                            ! underlying surface type (debugging only)
      real(r8):: pi                                 ! 3.1415...
-
+     
+     real(r8):: calday                             ! calendar day for nstep ! +CAW
+     real(r8):: wt1                                ! weighting scheme for ice density 
+     real(r8):: wt2                                ! weighting scheme for ice density 
+     real(r8):: ice_density_wgted
+     real(r8):: bbl_eff_rad_wgted
+     real(r8):: ice_density_lcl(1:12,1:96,1:144)
      ! SNICAR_AD new variables, follow sea-ice shortwave conventions
      real(r8):: &
         trndir(-nlevsno+1:nlevice+1)  , & ! solar beam down transmission from top
@@ -2086,7 +2117,25 @@ contains
          = (/ 0.0001_r8,  0.0046_r8, &
               0.0292_r8,  0.7214_r8, &
               234.9374_r8/)
-
+      
+      
+      !get weights for interpolation
+      calday = get_curr_calday()
+      wt1 = 1._r8 - (calday -1._r8)/365._r8
+      wt2 = 1._r8 - wt1
+      ice_density_lcl = ice_density(1:12,:,:)
+      ice_density_wgted = ice_density_lcl(mon_curr,50,50)*wt1 + ice_density_lcl(mon_curr+1,50,50)*wt2
+      bbl_eff_rad_wgted = bbl_eff_rad(mon_curr,50,50)*wt1 + bbl_eff_rad(mon_curr+1,50,50)*wt2
+      write(iulog,*) "CAW c",c_idx,"month",mon_curr
+      write(iulog,*) "CAW c",c_idx,"ice_density",ice_density(mon_curr,50,50)
+      write(iulog,*) "CAW c",c_idx,"ice_density mon+1",ice_density(mon_curr+1,50,50)
+      !write(iulog,*) "CAW c",c_idx,"ice_density_wgted",ice_density_wgted
+      !write(iulog,*) "CAW c",c_idx,"ice_density all", ice_density(:,50,50)
+      !write(iulog,*) "CAW c",c_idx,"ice_density_lcl", ice_density(:,50,50)
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad",bbl_eff_rad(mon_curr,50,50)
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad mon+1",bbl_eff_rad(mon_curr+1,50,50)
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad all", bbl_eff_rad(:,50,50)
 
       ! Loop over all non-urban columns
       ! (when called from CSIM, there is only one column)
@@ -2188,6 +2237,15 @@ contains
                    snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
                    h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
                    h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
+                   
+                   !get weights for interpolation
+                   !calday = get_curr_calday()
+                   !wt1 = 1._r8 - (calday -1._r8)/365._r8 
+                   !wt2 = 1._r8 - wt1
+                   !ice_density_wgted = ice_density(mon_curr,1,1)*wt1 + ice_density(mon_curr+1,1,1)*wt2
+                   !write(iulog,*) "CAW c",c_idx,"month",mon_curr
+                   !write(iulog,*) "CAW c",c_idx,"ice_density",ice_density(mon_curr)
+                   !write(iulog,*) "CAW c",c_idx,"ice_density_wgted",ice_density_wgted
                 endif
 
                 !snl_btm   = 0
@@ -2343,7 +2401,7 @@ contains
                             asm_prm_snw_lcl(i)     = asm_prm_snw_drc(rds_idx,bnd_idx)
                             ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_drc(rds_idx,bnd_idx)
                          else
-                            rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
+                            !rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
                             !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                             lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                             rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
@@ -2367,7 +2425,7 @@ contains
                              asm_prm_snw_lcl(i)     = asm_prm_snw_dfs(rds_idx,bnd_idx)
                              ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_dfs(rds_idx,bnd_idx)
                          else 
-                             rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
+                             !rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
                              !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                              lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                              rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
@@ -3245,7 +3303,7 @@ contains
                             asm_prm_snw_lcl(i)     = asm_prm_snw_drc(rds_idx,bnd_idx)
                             ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_drc(rds_idx,bnd_idx)
                          else
-                            rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
+                            !rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
                             !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                             lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                             rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
@@ -3269,7 +3327,7 @@ contains
                              asm_prm_snw_lcl(i)     = asm_prm_snw_dfs(rds_idx,bnd_idx)
                              ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_dfs(rds_idx,bnd_idx)
                          else 
-                             rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
+                             !rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
                              !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                              lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                              rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
@@ -3896,8 +3954,8 @@ contains
              enddo
              bare_ice_albout(c_idx,2) = flx_sum / sum(flx_wgt(nir_bnd_bgn:nir_bnd_end))
 
-              write(iulog,*) "CAW c",c_idx,"bare_ice_albout(c_idx,1)",bare_ice_albout(c_idx,1) 
-              write(iulog,*) "CAW c",c_idx,"bare_ice_albout(c_idx,2)",bare_ice_albout(c_idx,2)
+              !write(iulog,*) "CAW c",c_idx,"bare_ice_albout(c_idx,1)",bare_ice_albout(c_idx,1) 
+              !write(iulog,*) "CAW c",c_idx,"bare_ice_albout(c_idx,2)",bare_ice_albout(c_idx,2)
 
 
        else
