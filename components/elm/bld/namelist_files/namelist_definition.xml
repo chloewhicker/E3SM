@@ -412,6 +412,11 @@ SNICAR (SNow, ICe, and Aerosol Radiative model) optical data file name
 SNICAR (SNow, ICe, and Aerosol Radiative model) snow aging data file name
 </entry>
 
+<entry id="ficephyprop" type="char*256" category="datasets"
+       input_pathname="abs" group="elm_inparm" valid_values="" >
+SNICAR (SNow, ICe, and Aerosol Radiative model) optical data file name
+</entry>
+
 <entry id="hist_avgflag_pertape" type="char*1(6)" category="history"
        group="elm_inparm" valid_values="A,I,X,M" >
 Per file averaging flag.

@@ -7620,7 +7620,12 @@ Default: set by build-namelist.
 SNICAR (SNow, ICe, and Aerosol Radiative model) optical data file name
 </entry>
 
-<entry id="fsnowaging" type="char*256"  input_pathname="abs" category="clm"
+<entry id="ficephyprop" type="char*256"  input_pathname="abs" category="clm"
+       group="clm_inparm" valid_values="" >
+SNICAR (SNow, ICe, and Aerosol Radiative model) optical data file name !+CAW
+</entry>
+
+<entry id="fsnowaging" type="char*256"  input_pathname="abs" category="clm" 
        group="clm_inparm" valid_values="" >
 SNICAR (SNow, ICe, and Aerosol Radiative model) snow aging data file name
 </entry>
