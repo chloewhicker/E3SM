@@ -23,6 +23,7 @@ module SnowSnicarMod
   use ColumnDataType  , only : col_es, col_ws, col_wf
   !
   use timeinfoMod
+  use netcdf
 
   implicit none
   save
@@ -56,9 +57,6 @@ module SnowSnicarMod
   integer,  parameter :: idx_rhos_min   = 1              ! minimum snow density index used in aging lookup table [idx]
   integer,  parameter :: idx_Mie_ice_mx = 1515           ! number of effective radius indices used in Mie lookup table [idx]
  
-  integer,  parameter :: num_mons = 12
-  integer,  parameter :: num_lons = 144
-  integer,  parameter :: num_lats = 96 
   !$acc declare copyin(idx_Mie_snw_mx)
   !$acc declare copyin(idx_T_max     )
   !$acc declare copyin(idx_T_min     )
@@ -124,10 +122,12 @@ module SnowSnicarMod
   real(r8) :: sca_cff_vlm_airbbl(idx_Mie_ice_mx,numrad_snw); !+ CAW 
   real(r8) :: asm_prm_airbbl(idx_Mie_ice_mx,numrad_snw);     !+ CAW 
   
+  integer,  parameter :: num_mons = 12
+  integer,  parameter :: num_lats = 96
+  integer,  parameter :: num_lons = 144
+  real(r8) :: ice_density(num_lons,num_lats,num_mons)
+  real(r8) :: bbl_eff_rad(num_lons,num_lats,num_mons)
   
-  real(r8) :: ice_density(num_mons,num_lats,num_lons); !+ CAW 
-  real(r8) :: bbl_eff_rad(num_mons,num_lats,num_lons); !+ CAW 
-
   ! diffuse radiation weighted ice optical properties
   real(r8) :: ss_alb_snw_dfs     (idx_Mie_snw_mx,numrad_snw);
   real(r8) :: asm_prm_snw_dfs    (idx_Mie_snw_mx,numrad_snw);
@@ -1519,15 +1519,19 @@ contains
       use spmdMod    , only : masterproc
       use ncdio_pio  , only : file_desc_t, ncd_io, ncd_pio_openfile, ncd_pio_closefile
       use ncdio_pio  , only : ncd_pio_openfile, ncd_inqfdims, ncd_pio_closefile, ncd_inqdid, ncd_inqdlen
+      use netcdf
 
       type(file_desc_t)  :: ncid                        ! netCDF file id
       character(len=256) :: locfn                       ! local filename
       character(len= 32) :: subname = 'SnowOptics_init' ! subroutine name
       integer            :: ier                         ! error status
       integer            :: atm_type_index              ! index for atmospheric type
+     ! integer ::  ncid2, varid
       type(file_desc_t)  :: ncid2                        ! netCDF file id  !CAW
       character(len=256) :: locfn2                       ! local filename  !CAW
+ 
 
+      integer ::  ierr                                   ! CAW
      !mgf++
      logical :: readvar      ! determine if variable was read from NetCDF file
      !mgf--
@@ -1583,17 +1587,35 @@ contains
       if ((atm_type_index > 0) .and. (.not. readvar)) call endrun( "ERROR: error in reading in flx_wgt_dif data" )
 
       ! Open ice properties file 
-      if(masterproc) write(iulog,*) 'Attempting to read ice physical properties .....'
+      !if(masterproc) write(iulog,*) 'Attempting to read ice physical properties .....'
+      !ierr = nf90_open(ficephyprop, nf90_nowrite, ncid2)
+      !ierr = nf90_inq_varid(ncid2, 'ice_density', varid)
+      !ierr = nf90_inquire_variable(ncid2, varid, dimids = dimIDs)
+      !ierr = nf90_inquire_dimension(ncid2, dimIDs(1), len = num_mons) 
+      !ierr = nf90_inquire_dimension(ncid2, dimIDs(2), len = num_lats)
+      !ierr = nf90_inquire_dimension(ncid2, dimIDs(3), len = num_lons)
+      !if(masterproc)  write(iulog,*) "CAW num_mons", num_mons
+      !if(masterproc)  write(iulog,*) "CAW num_lats", num_lats
+      !if(masterproc)  write(iulog,*) "CAW num_lons", num_lons
+      !allocate(ice_density(num_mons,num_lats,num_lons))
+      !allocate(bbl_eff_rad(num_mons,num_lats,num_lons))
+     ! ierr = nf90_get_var(ncid2, varid, ice_density, (/1,1,1/),(/12,96,144/)) ! start =  (mon_num,1,1) count = (1, 96, 144)
+     ! ierr = nf90_inq_varid(ncid2, 'bbl_eff_rad', varid)
+     ! ierr = nf90_get_var(ncid2, varid, bbl_eff_rad)
+      !ierr = nf90_close(ncid2)
+       
+      if(masterproc) write(iulog,*) 'Attempting to read ice physical properties .....' 
       call getfil (ficephyprop, locfn2, 0)
       call ncd_pio_openfile(ncid2, locfn2, 0)
       if(masterproc) write(iulog,*) subname,trim(ficephyprop)
-
-      call ncd_io( 'ice_density', ice_density, 'read', ncid2, readvar=readvar, posNOTonfile=.true.)
-      call ncd_io( 'bbl_eff_rad', bbl_eff_rad, 'read', ncid2, readvar=readvar, posNOTonfile=.true.)
-      write(iulog,*) "CAW ice_density",ice_density(2,1,1)
-      write(iulog,*) "CAW ice_density",ice_density(3,1,1)
-      write(iulog,*) "CAW ice_density",ice_density(4,1,1)
-      write(iulog,*) "CAW ice_density",ice_density(5,1,1) 
+      call ncd_io( 'ice_density', ice_density, 'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'bbl_eff_rad', bbl_eff_rad, 'read', ncid2, posNOTonfile=.true.)
+      if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
+      if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
+      if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
+      if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,:)
+      
+      
       !$acc update device( &
       !$acc ss_alb_snw_drc     ,&
       !$acc asm_prm_snw_drc    ,&
@@ -1770,7 +1792,7 @@ contains
      type(file_desc_t)  :: ncid                        ! netCDF file id
      character(len=256) :: locfn                       ! local filename
      character(len= 32) :: subname = 'SnowOptics_init' ! subroutine name
-     integer            :: varid                       ! netCDF id's
+     !integer            :: varid                       ! netCDF id's
      integer            :: ier                         ! error status
      !
      ! Open snow aging (effective radius evolution) file:
@@ -1998,7 +2020,8 @@ contains
      real(r8):: wt2                                ! weighting scheme for ice density 
      real(r8):: ice_density_wgted
      real(r8):: bbl_eff_rad_wgted
-     real(r8):: ice_density_lcl(1:12,1:96,1:144)
+     real(r8):: ice_density_lcl(1:12)
+     real(r8):: bbl_eff_rad_lcl(1:12)
      ! SNICAR_AD new variables, follow sea-ice shortwave conventions
      real(r8):: &
         trndir(-nlevsno+1:nlevice+1)  , & ! solar beam down transmission from top
@@ -2272,22 +2295,19 @@ contains
               234.9374_r8/)
       
       !get weights for interpolation
-      calday = get_curr_calday()
-      wt1 = 1._r8 - (calday -1._r8)/365._r8
-      wt2 = 1._r8 - wt1
-      ice_density_lcl = ice_density(1:12,:,:)
-      ice_density_wgted = ice_density_lcl(mon_curr,50,50)*wt1 + ice_density_lcl(mon_curr+1,50,50)*wt2
-      bbl_eff_rad_wgted = bbl_eff_rad(mon_curr,50,50)*wt1 + bbl_eff_rad(mon_curr+1,50,50)*wt2
-      write(iulog,*) "CAW c",c_idx,"month",mon_curr
-      write(iulog,*) "CAW c",c_idx,"ice_density",ice_density(mon_curr,50,50)
-      write(iulog,*) "CAW c",c_idx,"ice_density mon+1",ice_density(mon_curr+1,50,50)
+      !calday = get_curr_calday()
+      !wt1 = 1._r8 - (calday -1._r8)/365._r8
+      !wt2 = 1._r8 - wt1
+      !ice_density_lcl = ice_density(1:12,50,50)
+      !bbl_eff_rad_lcl = bbl_eff_rad(1:12,50,50)
+      !ice_density_wgted = ice_density_lcl(mon_curr)*wt1 + ice_density_lcl(mon_curr+1)*wt2
+      !bbl_eff_rad_wgted = bbl_eff_rad_lcl(mon_curr)*wt1 + bbl_eff_rad_lcl(mon_curr+1)*wt2
+      !write(iulog,*) "CAW c",c_idx,"month",mon_curr,"calday",calday
+      !write(iulog,*) "CAW c",c_idx,"ice_density",ice_density_lcl(mon_curr),"mon+1",ice_density_lcl(mon_curr+1)
       !write(iulog,*) "CAW c",c_idx,"ice_density_wgted",ice_density_wgted
-      !write(iulog,*) "CAW c",c_idx,"ice_density all", ice_density(:,50,50)
-      !write(iulog,*) "CAW c",c_idx,"ice_density_lcl", ice_density(:,50,50)
-      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad",bbl_eff_rad(mon_curr,50,50)
-      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad mon+1",bbl_eff_rad(mon_curr+1,50,50)
+      
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad",bbl_eff_rad(mon_curr),"mon+1",bbl_eff_rad(mon_curr+1)
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
-      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad all", bbl_eff_rad(:,50,50)
 
       ! Loop over all non-urban columns
       ! (when called from CSIM, there is only one column)
