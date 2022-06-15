@@ -326,8 +326,6 @@ contains
        albsfc(c,:)     = albsoi(c,:)
       h2osno_liq(c,:) = h2osoi_liq(c,-nlevsno+1:0)
       h2osno_ice(c,:) = h2osoi_ice(c,-nlevsno+1:0)
-      ! h2osno_liq(c,:) = h2osoi_liq(c,:) !+CAW extend to include glacier lyrs TODO - change the # of h2osno_liq to 15 in 
-      ! h2osno_ice(c,:) = h2osoi_ice(c,:) !+CAW extend to include glacier lyrs
        snw_rds_in(c,:) = nint(snw_rds(c,:))
     end do
 
