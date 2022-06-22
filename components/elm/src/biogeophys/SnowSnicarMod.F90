@@ -1559,10 +1559,10 @@ contains
       if(masterproc) write(iulog,*) subname,trim(ficephyprop)
       call ncd_io( 'ice_density', ice_density, 'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'bbl_eff_rad', bbl_eff_rad, 'read', ncid2, posNOTonfile=.true.)
-      if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
-      if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
-      if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
-      if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,:)
+      !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
+      !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
+      !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
+      !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,:)
       
       
       !$acc update device( &
@@ -1807,8 +1807,9 @@ contains
      ! !USES:
       !$acc routine seq
      use elm_varpar       , only : nlevsno, numrad
-     use clm_time_manager , only : get_nstep, get_curr_calday
-     use timeinfoMod      , only : mon_curr ! CAW
+     use clm_time_manager , only : get_nstep, get_curr_calday, &
+             get_curr_date
+     !use timeinfoMod      , only : mon_curr ! CAW
      use shr_const_mod    , only : SHR_CONST_PI
      use elm_varctl       , only : use_snicar_lndice
      
@@ -1938,13 +1939,14 @@ contains
      integer :: sfctype                            ! underlying surface type (debugging only)
      real(r8):: pi                                 ! 3.1415...
      
-     real(r8):: calday                             ! calendar day for nstep ! +CAW
+     integer :: yr, mon, day, tod, aindex(2), caldaym(13)
+     real(r8):: calday_curr                             ! calendar day for nstep ! +CAW
      real(r8):: wt1                                ! weighting scheme for ice density 
      real(r8):: wt2                                ! weighting scheme for ice density 
      real(r8):: ice_density_wgted
      real(r8):: bbl_eff_rad_wgted
-     real(r8):: ice_density_lcl(1:12)
-     real(r8):: bbl_eff_rad_lcl(1:12)
+     integer :: bbl_eff_rad_ind
+     data caldaym / 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 /
      ! SNICAR_AD new variables, follow sea-ice shortwave conventions
      real(r8):: &
         trndir(-nlevsno+1:nlevice+1)  , & ! solar beam down transmission from top
@@ -2143,17 +2145,32 @@ contains
       
       
       !get weights for interpolation
-      !calday = get_curr_calday()
-      !wt1 = 1._r8 - (calday -1._r8)/365._r8
-      !wt2 = 1._r8 - wt1
-      !ice_density_lcl = ice_density(1:12,50,50)
-      !bbl_eff_rad_lcl = bbl_eff_rad(1:12,50,50)
-      !ice_density_wgted = ice_density_lcl(mon_curr)*wt1 + ice_density_lcl(mon_curr+1)*wt2
-      !bbl_eff_rad_wgted = bbl_eff_rad_lcl(mon_curr)*wt1 + bbl_eff_rad_lcl(mon_curr+1)*wt2
-      !write(iulog,*) "CAW c",c_idx,"month",mon_curr,"calday",calday
-      !write(iulog,*) "CAW c",c_idx,"ice_density",ice_density_lcl(mon_curr),"mon+1",ice_density_lcl(mon_curr+1)
+      call get_curr_date( yr, mon, day, tod )
+      calday_curr = get_curr_calday()
+      aindex(1) = mon+1
+      if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
+              wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
+              aindex(2) = aindex(1)-1
+      else
+              wt1 = 1.0_r8 - (calday_curr-(caldaym(mon+1)+caldaym(mon))/2._r8)/   &
+                      (caldaym(mon+1)-caldaym(mon))
+              aindex(2) = aindex(1)+1
+      end if
+      wt2 = 1._r8 - wt1
+
+      ice_density_wgted = ice_density(1,1,aindex(1))*wt1+ice_density(1,1,aindex(2))*wt2
+      bbl_eff_rad_wgted = bbl_eff_rad(1,1,aindex(1))*wt1+bbl_eff_rad(1,1,aindex(2))*wt2 
+
+      !write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr
+      !write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
+      !write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
+      !write(iulog,*) "CAW c",c_idx,"ice_density(1,1,aindex(1))",ice_density(1,1,aindex(1)),"ice_density(1,1,aindex(2))",ice_density(1,1,aindex(2))
       !write(iulog,*) "CAW c",c_idx,"ice_density_wgted",ice_density_wgted
-      
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(1,1,aindex(1))",bbl_eff_rad(1,1,aindex(1)),"bbl_eff_rad(1,1,aindex(2))",bbl_eff_rad(1,1,aindex(2))
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
+      !write(iulog,*) "CAW c",c_idx,"nint(bbl_eff_rad)",nint(bbl_eff_rad_wgted)
+      !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_ind",bbl_eff_rad_ind
+
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad",bbl_eff_rad(mon_curr),"mon+1",bbl_eff_rad(mon_curr+1)
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
 
@@ -2254,10 +2271,10 @@ contains
                 h2osoi_ice_lcl(:) = h2osoi_ice(c_idx,:) ! +CAW
                 dz_lcl(:)                 = dz(c_idx,:) !+CAW 
                 if ( (use_snicar_lndice).and. (lnd_ice ==1) ) then 
-                   snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
+                   snw_rds_lcl(1:snl_btm)    = nint(bbl_eff_rad_wgted)! CAW - temp set the air bub rad to constant
                    h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
                    h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
-                   
+                   write(iulog,*) "CAW c",c_idx,"snw_rds_lcl(1)",snw_rds_lcl(1) 
                    !get weights for interpolation
                    !calday = get_curr_calday()
                    !wt1 = 1._r8 - (calday -1._r8)/365._r8 
@@ -2429,11 +2446,12 @@ contains
                             sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW 
                             asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                             abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
-                            vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW 
+                            vlm_frac_air(i)           = (rho_ice - ice_density_wgted) / rho_ice;          ! +CAW
+                            !write(iulog,*) "CAW c",c_idx,"lyr",i,"vlm_frac_air(i)",vlm_frac_air(i)   
                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                    vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
+                                    vlm_frac_air(i)) /ice_density_wgted) + abs_cff_mss_ice_lcl(i) ! +CAW
                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                    vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
+                                    vlm_frac_air(i)) /ice_density_wgted) / ext_cff_mss_snw_lcl(i) ! +CAW
                         endif
                       enddo
                    elseif (flg_slr_in == 2) then
@@ -2453,11 +2471,11 @@ contains
                              sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW
                              asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                              abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
-                             vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW
+                             vlm_frac_air(i)           = (rho_ice - ice_density_wgted) / rho_ice;          ! +CAW
                              ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                     vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
+                                     vlm_frac_air(i)) /ice_density_wgted) + abs_cff_mss_ice_lcl(i) ! +CAW
                              ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                     vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
+                                     vlm_frac_air(i)) /ice_density_wgted) / ext_cff_mss_snw_lcl(i) ! +CAW
                          endif
                       enddo
                    endif
