@@ -350,7 +350,6 @@ contains
      ! !LOCAL VARIABLES:
      integer , parameter :: nband = numrad           ! number of solar radiation waveband classes
      real(r8), parameter :: mpe = 1.e-06_r8          ! prevents overflow for division by zero
-     integer  ::  nlevice                            ! +CAW number of glacier ice  
      integer  :: fp                                  ! non-urban filter pft index
      integer  :: p                                   ! patch index
      integer  :: c                                   ! column index
@@ -613,7 +612,7 @@ contains
            !endif                                                                  !+CAW
 
  
-             do i = -nlevsno+1,nlevice+1,1
+             do i = -nlevsno+1,1,1
                 sabg_lyr(p,i) = flx_absdv(c,i)*trd(p,1) + flx_absdn(c,i)*trd(p,2) + &
                      flx_absiv(c,i)*tri(p,1) + flx_absin(c,i)*tri(p,2)
            !     if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW

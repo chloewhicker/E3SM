@@ -991,6 +991,10 @@ contains
               end do
             end do
         end if
+       !write(iulog,*) "CAW lnd_import_export g",g,"smap2_lon(thisx)",smap2_lon(atm2lnd_vars%ndepind(g,1))
+       !write(iulog,*) "CAW lnd_import_export g",g,"smap2_lat(thisy)",smap2_lat(atm2lnd_vars%ndepind(g,2))
+       !write(iulog,*) "CAW lnd_import_export g",g,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g)
+       !write(iulog,*) "CAW lnd_import_export g",g,"grc_pp%londeg(g_idx)",grc_pp%londeg(g)
 
         !get weights for interpolation (note this method doesn't get the month boundaries quite right..)
         aindex(1) = mon+1
