@@ -122,7 +122,7 @@ module SnowSnicarMod
   real(r8) :: sca_cff_vlm_airbbl(idx_Mie_ice_mx,numrad_snw); !+ CAW 
   real(r8) :: asm_prm_airbbl(idx_Mie_ice_mx,numrad_snw);     !+ CAW 
   
-  integer,  parameter :: num_mons = 264
+  integer,  parameter :: num_mons = 324
   integer,  parameter :: num_lats = 360
   integer,  parameter :: num_lons = 720
   real(r8) :: ice_density(num_lons,num_lats,num_mons)
@@ -1587,6 +1587,7 @@ contains
       ! Diffuse incident spectral flux:
       call ncd_io( 'flx_wgt_dif', flx_wgt_dif,           'read', ncid, readvar=readvar, posNOTonfile=.true.)
       if ((atm_type_index > 0) .and. (.not. readvar)) call endrun( "ERROR: error in reading in flx_wgt_dif data" )
+     
 
       ! Open ice properties file 
       !if(masterproc) write(iulog,*) 'Attempting to read ice physical properties .....'
@@ -1617,7 +1618,7 @@ contains
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
-      !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,:)
+      !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,10)
       !if(masterproc)  write(iulog,*) "CAW smap1_lon",smap1_lon
       !if(masterproc)  write(iulog,*) "CAW smap1_lat",smap1_lat
       
@@ -2369,42 +2370,6 @@ contains
           l_idx     = col_pp%landunit(c_idx)
           g_idx     = col_pp%gridcell(c_idx)
 
-          !mindist=99999
-          !do thisx = 1,360
-          !   do thisy = 1,180
-             !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(thisx)
-             !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(thisy)
-             !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
-             !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
-          !      if (ldomain%lonc(g_idx) .lt. 0) then
-          !           if (smap1_lon(thisx) >= 180) smap1_lon(thisx) = smap1_lon(thisx)-360._r8
-          !      else if (ldomain%lonc(g_idx) .ge. 180) then
-          !          if (smap1_lon(thisx) < 0) smap1_lon(thisx) = smap1_lon(thisx) + 360._r8
-          !      end if
-          !      thislon = smap1_lon(thisx)
-          !      thisdist = 100*((smap1_lat(thisy) - ldomain%latc(g_idx))**2 + &
-          !                 (thislon - ldomain%lonc(g_idx))**2)**0.5
-          !      if (thisdist .lt. mindist) then
-          !          mindist = thisdist
-          !          tmpx = thisx
-          !          tmpy = thisy
-                    !ice_density_wgted = ice_density(thisx,thisy,aindex(1))*wt1+ice_density(thisx,thisy,aindex(2))*wt2
-                    !bbl_eff_rad_wgted = bbl_eff_rad(thisx,thisy,aindex(1))*wt1+bbl_eff_rad(thisx,thisy,aindex(2))*wt2
-          !      end if
-          !   end do
-          !end do 
-        
-          !ice_density_wgted = ice_density(tmpx,tmpy,aindex(1))*wt1+ice_density(tmpx,tmpy,aindex(2))*wt2
-          !bbl_eff_rad_wgted = bbl_eff_rad(tmpx,tmpy,aindex(1))*wt1+bbl_eff_rad(tmpx,tmpy,aindex(2))*wt2
-
-      !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(tmpx)",smap1_lon(tmpx)
-      !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(tmpy)",smap1_lat(tmpy)
-      !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
-      !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx) 
-   
-  
-  
-  
           ! +CAW - start
 
               if ( (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4) .and. (use_snicar_lndice) ) then  ! land ice
@@ -2437,21 +2402,21 @@ contains
                         end if
                      end do
                   end do
+                  ice_density_wgted = ice_density(tmpx,tmpy,aindex(1))*wt1+ice_density(tmpx,tmpy,aindex(2))*wt2
+                  bbl_eff_rad_wgted = bbl_eff_rad(tmpx,tmpy,aindex(1))*wt1+bbl_eff_rad(tmpx,tmpy,aindex(2))*wt2
 
-                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(tmpx)
-                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(tmpy)
-                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
-                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
-                      ice_density_wgted = ice_density(tmpx,tmpy,aindex(1))*wt1+ice_density(tmpx,tmpy,aindex(2))*wt2
-                      bbl_eff_rad_wgted = bbl_eff_rad(tmpx,tmpy,aindex(1))*wt1+bbl_eff_rad(tmpx,tmpy,aindex(2))*wt2
-                   !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
-                   !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
-                   !   write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr
-                   !   write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
-                   !   write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
-                   !   write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(1)),"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(2))
-                   !   write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(2))
-                   !   write(iulog,*) "CAW c",c_idx,"tmpx",tmpx,"tmpy",tmpy
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(tmpx)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(tmpy)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
+                  write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr
+                  write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
+                  write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
+                 ! write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(1)),"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(2))
+                 ! write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(2))
+                 ! write(iulog,*) "CAW c",c_idx,"tmpx",tmpx,"tmpy",tmpy
 
               else 
                  snl_btm   = 0  
@@ -2532,7 +2497,7 @@ contains
                    snw_rds_lcl(1:snl_btm)    = nint(bbl_eff_rad_wgted)! CAW - temp set the air bub rad to constant
                    h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
                    h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
-                   !write(iulog,*) "CAW c",c_idx,"snw_rds_lcl(1)",snw_rds_lcl(1) 
+                   ! write(iulog,*) "CAW c",c_idx,"snw_rds_lcl(1:snl_btm)",snw_rds_lcl(1:snl_btm) 
                    !get weights for interpolation
                    !calday = get_curr_calday()
                    !wt1 = 1._r8 - (calday -1._r8)/365._r8 
@@ -3334,7 +3299,7 @@ contains
 
                  if (isnan(albedo)) then
                  !if (kfrsnl==1) then
-                    ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo=", albedo
+                     write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo w/sno=", albedo
                     ! write (iulog,*) "CAW c",c_idx,"landtype= ", sfctype
                     ! write (iulog,*) "CAW c",c_idx,"coszen= ", coszen(c_idx), " flg_slr= ", flg_slr_in
                     ! do i=snl_top,snl_btm,1
@@ -3567,13 +3532,13 @@ contains
              albout(c_idx,1) = 0._r8
              albout(c_idx,2) = 0._r8
           endif    ! if column has snow and coszen > 0
-       
-
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+     !!!!!!!!!!!!! 
+       ! if were over land ice calculate the albedo of bare ice  
        if ( (coszen(c_idx) > 0._r8) .and. (lnd_ice ==1) ) then
                   snl_lcl           =  0  
                   h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
                   h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
-                  snw_rds_lcl(:)    =  snw_rds(c_idx,:)
                 !write(iulog,*) "CAW c",c_idx,"bare ice calculations START" 
                 !write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
                 !write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)
@@ -3581,13 +3546,11 @@ contains
                 h2osoi_liq_lcl(:) = h2osoi_liq(c_idx,:) ! +CAW
                 h2osoi_ice_lcl(:) = h2osoi_ice(c_idx,:) ! +CAW
                 
-                snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
+                !snw_rds_lcl(1:snl_btm)    = 130 ! CAW - temp set the air bub rad to constant
                 dz_lcl(:)                 = dz(c_idx,:) !+CAW
                 h2osno_liq_lcl(1:snl_btm) = h2osoi_liq_lcl(1:snl_btm) ! +CAW
                 h2osno_ice_lcl(1:snl_btm) = h2osoi_ice_lcl(1:snl_btm) ! +CAW
                 
-
-                !snl_btm   = 0
                 snl_top   = snl_lcl+1
 
                 ! for debugging only
@@ -3726,7 +3689,6 @@ contains
                             asm_prm_snw_lcl(i)     = asm_prm_snw_drc(rds_idx,bnd_idx)
                             ext_cff_mss_snw_lcl(i) = ext_cff_mss_snw_drc(rds_idx,bnd_idx)
                          else
-                            !rhos = (h2osoi_liq_lcl(i)+h2osoi_ice_lcl(i)) / dz_lcl(i)
                             !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"rhos=",rhos
                             lyr_typ(i) = 2 ! +CAW indicates an ice layer 
                             rds_idx = snw_rds_lcl(i) - snw_rds_min_tbl + 1                 ! +CAW
@@ -3734,11 +3696,20 @@ contains
                             sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW 
                             asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                             abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
-                            vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW 
+                            vlm_frac_air(i)           = (rho_ice - ice_density_wgted) / rho_ice;          ! +CAW 
                             ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                    vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
+                                    vlm_frac_air(i)) /ice_density_wgted) + abs_cff_mss_ice_lcl(i) ! +CAW
                             ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                    vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
+                                    vlm_frac_air(i)) /ice_density_wgted) / ext_cff_mss_snw_lcl(i) ! +CAW
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'rds_idx',rds_idx
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'sca_cff_vlm_airbbl_lcl',sca_cff_vlm_airbbl_lcl(i)
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'asm_prm_snw_lcl',asm_prm_snw_lcl(i)
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'asm_prm_snw_lcl',asm_prm_snw_lcl(i)
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'asm_prm_snw_lcl',asm_prm_snw_lcl(i)
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'vlm_frac_air',vlm_frac_air(i)
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'ext_cff_mss_snw_lcl',ext_cff_mss_snw_lcl(i)
+                           ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,'ss_alb_snw_lcl',ss_alb_snw_lcl(i)
+
                         endif
                       enddo
                    elseif (flg_slr_in == 2) then
@@ -3758,11 +3729,11 @@ contains
                              sca_cff_vlm_airbbl_lcl(i) = sca_cff_vlm_airbbl(rds_idx,bnd_idx) ! +CAW
                              asm_prm_snw_lcl(i)        = asm_prm_airbbl(rds_idx,bnd_idx)     ! +CAW
                              abs_cff_mss_ice_lcl(i)    = abs_cff_mss_ice(bnd_idx)            ! +CAW
-                             vlm_frac_air(i)           = (rho_ice - c900) / rho_ice;          ! +CAW
+                             vlm_frac_air(i)           = (rho_ice - ice_density_wgted) / rho_ice;          ! +CAW
                              ext_cff_mss_snw_lcl(i)    = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                     vlm_frac_air(i)) /c900) + abs_cff_mss_ice_lcl(i) ! +CAW
+                                     vlm_frac_air(i)) /ice_density_wgted) + abs_cff_mss_ice_lcl(i) ! +CAW
                              ss_alb_snw_lcl(i)         = ((sca_cff_vlm_airbbl_lcl(i) * &
-                                     vlm_frac_air(i)) /c900) / ext_cff_mss_snw_lcl(i) ! +CAW
+                                     vlm_frac_air(i)) /ice_density_wgted) / ext_cff_mss_snw_lcl(i) ! +CAW
                          endif
                       enddo
                    endif
@@ -4260,7 +4231,7 @@ contains
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau",tau_snw(i)
                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"mss_cnc_aer_lcl",mss_cnc_aer_lcl(i,:)
                       enddo
-                      !call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+                      call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
                   endif 
 
                   ! Absorbed flux in each layer

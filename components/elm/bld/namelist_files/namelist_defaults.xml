@@ -609,8 +609,8 @@ this mask will have smb calculated over the entire global land surface
 
 <!-- SNICAR (SNow, ICe, and Aerosol Radiative model) datasets -->
 <!--  ***********  Resolution independent:   ***********  -->
-<fsnowoptics >lnd/clm2/snicardata/snicar_optics_5bnd_mam_c160322.nc</fsnowoptics>
-<ficephyprop >lnd/clm2/snicardata/jja_icephyprop_2000_2021_NaNfill_c20220812.nc</ficephyprop>
+<fsnowoptics >lnd/clm2/snicardata/snicar_optics_5bnd_mam_cCAW20220823.nc</fsnowoptics>
+<ficephyprop >lnd/clm2/snicardata/jja_icephyprop_2000_2021_NaNfill_c20220818.nc</ficephyprop>
 <fsnowaging  >lnd/clm2/snicardata/snicar_drdt_bst_fit_60_c070416.nc</fsnowaging>
 <use_snicar_ad>.true.</use_snicar_ad>
 <snow_shape>sphere</snow_shape>
