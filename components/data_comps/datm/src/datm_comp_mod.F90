@@ -886,7 +886,7 @@ CONTAINS
 
        enddo   ! lsize
 
-    case('CLMNCEP')
+    case('CLMNCEP','CRUJRA')
        if (firstcall) then
           if (swind < 1 .or. stbot < 1) then
              write(logunit,F00) ' ERROR: wind and tbot must be in streams for CLMNCEP'
