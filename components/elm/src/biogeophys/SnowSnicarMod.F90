@@ -2323,13 +2323,9 @@ contains
               !get weights for interpolation
               call get_curr_date( yr, mon, day, tod )
               calday_curr = get_curr_calday()
-              !write(iulog,*) "CAW c",c_idx,"yr",yr
-              !write(iulog,*) "CAW c",c_idx,"mon",mon
-              if (yr <= 2000) then
-                      aindex(1) = mon+1
+              
+              aindex(1) = ((yr-1995)*12)+mon
 
-              end if
-              aindex(1) = mon+1
               if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
                   wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
                   aindex(2) = aindex(1)-1
@@ -2411,9 +2407,9 @@ contains
                  ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
                  ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
                  ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
-                  write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr
-                  write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
-                  write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
+                 ! write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr,"day",day
+                 ! write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
+                 ! write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
                  ! write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(1)),"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(2))
                  ! write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(2))
                  ! write(iulog,*) "CAW c",c_idx,"tmpx",tmpx,"tmpy",tmpy
@@ -3539,6 +3535,8 @@ contains
                   snl_lcl           =  0  
                   h2osno_liq_lcl(:) =  h2osno_liq(c_idx,:)
                   h2osno_ice_lcl(:) =  h2osno_ice(c_idx,:)
+                  snw_rds_lcl(1:snl_btm)    = nint(bbl_eff_rad_wgted)
+
                 !write(iulog,*) "CAW c",c_idx,"bare ice calculations START" 
                 !write(iulog,*) "CAW c",c_idx,"lnd_ice",lnd_ice
                 !write(iulog,*) "CAW c",c_idx,"snl(c_idx)",snl(c_idx)

@@ -63,8 +63,7 @@ contains
                                                ! if 2 set to cyclic boundaries 
                                                ! if 3 leave on input data grid and extrapolate later
     real(r8), pointer :: datain(:,:,:,:,:)
-    integer :: lchnk
-
+    integer :: lchnk 
     bndydata%fieldcnt=fieldcnt
     if(present(vertextrap)) then
        bndydata%vertextrap=vertextrap
@@ -74,7 +73,6 @@ contains
     nullify(bndydata%fields)
 
     call boundarydata_read(phys_state,bndyfilename,fieldcnt,fieldnames,bndydata,datain)
-
     if(bndydata%iszonal) then
        call boundarydata_interpolate(phys_state,datain,bndydata)
 
