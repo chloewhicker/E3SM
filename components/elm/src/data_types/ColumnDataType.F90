@@ -139,7 +139,7 @@ module ColumnDataType
     real(r8), pointer :: snowdp             (:)   => null() ! snow height averaged for area with and without snow cover(m)
     real(r8), pointer :: snow_persistence   (:)   => null() ! length of time that ground has had non-zero snow thickness (sec)
     real(r8), pointer :: snw_rds_top        (:)   => null() ! snow grain radius (top layer)  (m^-6, microns)
-    logical , pointer :: do_capsnow         (:)   => null() ! true => do snow capping
+    logical,  pointer :: do_capsnow         (:)   => null() ! true => do snow capping
     ! Area fractions
     real(r8), pointer :: frac_sno           (:)   => null() ! fraction of ground covered by snow (0 to 1)
     real(r8), pointer :: frac_sno_eff       (:)   => null() ! fraction of ground covered by snow (0 to 1)
@@ -1307,8 +1307,8 @@ contains
   ! Subroutines to initialize and clean column water state data structure
   !------------------------------------------------------------------------
   subroutine col_ws_init(this, begc, endc, h2osno_input, snow_depth_input, watsat_input)
-    !
-    use elm_varctl  , only : use_lake_wat_storage
+      use elm_varctl  , only : use_lake_wat_storage
+
     ! !ARGUMENTS:
     class(column_water_state) :: this
     integer , intent(in)      :: begc,endc
@@ -1321,6 +1321,7 @@ contains
     real(r8)           :: snowbd      ! temporary calculation of snow bulk density (kg/m3)
     real(r8)           :: fmelt       ! snowbd/100
     integer            :: c,l,j,nlevs,nlevbed, ncells
+
     !------------------------------------------------------------------------
 
     !-----------------------------------------------------------------------
@@ -1381,7 +1382,15 @@ contains
     allocate(this%vsfm_smpl_col_1d   (ncells))                        ; this%vsfm_smpl_col_1d   (:)   = spval
     allocate(this%vsfm_soilp_col_1d  (ncells))                        ; this%vsfm_soilp_col_1d  (:)   = spval
     allocate(this%h2orof             (begc:endc))                     ; this%h2orof             (:)   = spval
-    allocate(this%frac_h2orof        (begc:endc))                     ; this%frac_h2orof        (:)   = spval
+    allocate(this%frac_h2orof        (begc:endc))                     ; this%frac_h2orof        (:)   = spval 
+    allocate(this%vsfm_fliq_col_1d   (ncells))                        ; this%vsfm_fliq_col_1d   (:)   = nan
+    allocate(this%vsfm_sat_col_1d    (ncells))                        ; this%vsfm_sat_col_1d    (:)   = nan
+    allocate(this%vsfm_mass_col_1d   (ncells))                        ; this%vsfm_mass_col_1d   (:)   = nan
+    allocate(this%vsfm_smpl_col_1d   (ncells))                        ; this%vsfm_smpl_col_1d   (:)   = nan
+    allocate(this%vsfm_soilp_col_1d  (ncells))                        ; this%vsfm_soilp_col_1d  (:)   = nan
+    allocate(this%h2orof             (begc:endc))                     ; this%h2orof             (:)   = nan
+    allocate(this%frac_h2orof        (begc:endc))                     ; this%frac_h2orof        (:)   = nan
+    !allocate(this%ice_alb            (begc:endc))                     ; this%ice_alb            (:)   = nan !+CAW
 
     !-----------------------------------------------------------------------
     ! initialize history fields for select members of col_ws
@@ -1444,7 +1453,12 @@ contains
           avgflag='A', long_name='top snow layer effective grain radius', &
            ptr_col=this%snw_rds_top, set_urb=spval, default='inactive')
 
-    this%sno_liq_top(begc:endc) = spval
+    !this%ice_alb(begc:endc) = spval
+    ! call hist_addfld1d (fname='ICEALB', units='fraction', &
+    !      avgflag='A', long_name='bare ice albedo', &
+    !       ptr_col=this%ice_alb, set_urb=spval, default='inactive')
+    
+   this%sno_liq_top(begc:endc) = spval
      call hist_addfld1d (fname='SNOLIQFL', units='fraction', &
           avgflag='A', long_name='top snow layer liquid water fraction (land)', &
            ptr_col=this%sno_liq_top, set_urb=spval, default='inactive')

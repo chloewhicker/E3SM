@@ -490,9 +490,9 @@ contains
     use VegetationPropertiesType        , only : veg_vp
     use SoilorderConType      , only : soilorderconInit
     use LakeCon               , only : LakeConInit
-    use SatellitePhenologyMod , only : SatellitePhenologyInit, readAnnualVegetation
+    use SatellitePhenologyMod , only : SatellitePhenologyInit, readAnnualVegetation,interpMonthlyVeg
     use SatellitePhenologyMod , only : interpMonthlyVeg, SatellitePhenology
-    use SnowSnicarMod         , only : SnowAge_init, SnowOptics_init
+    use SnowSnicarMod         , only : SnowAge_init, SnowOptics_init, BareIceGrd
     use initVerticalMod       , only : initVertical
     use lnd2atmMod            , only : lnd2atm_minimal
     use glc2lndMod            , only : glc2lnd_type
@@ -873,6 +873,9 @@ contains
        call get_clump_bounds(nc, bounds_clump)
        call reweight_wrapup(bounds_clump, &
             glc2lnd_vars%icemask_grc(bounds_clump%begg:bounds_clump%endg))
+
+       call BareIceGrd(filter_inactive_and_active(nc)%num_nourbanc,     &
+            filter_inactive_and_active(nc)%nourbanc)
     end do
     !$OMP END PARALLEL DO
 

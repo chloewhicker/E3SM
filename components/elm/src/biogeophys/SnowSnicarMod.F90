@@ -33,6 +33,7 @@ module SnowSnicarMod
   public :: SnowAge_grain    ! Snow effective grain size evolution
   public :: SnowAge_init     ! Initial read in of snow-aging file
   public :: SnowOptics_init  ! Initial read in of snow-optics file
+  public :: BareIceGrd
   !
   ! !PUBLIC DATA MEMBERS:
   integer,  public, parameter :: sno_nbr_aer =   8        ! number of aerosol species in snowpack
@@ -40,6 +41,10 @@ module SnowSnicarMod
   logical,  public, parameter :: DO_SNO_OC =    .false.   ! parameter to include organic carbon (OC)
                                                           ! in snowpack radiative calculations
   logical,  public, parameter :: DO_SNO_AER =   .true.    ! parameter to include aerosols in snowpack radiative calculations
+
+ ! integer :: bare_ice_indx(bounds_proc%begg:bounds_proc%endg)         ! index of closest model grid point x
+ ! integer :: bare_ice_indy(bounds_proc%begg:bounds_proc%endg)         ! index of closest model grid point y
+
   !$acc declare copyin(sno_nbr_aer,DO_SNO_OC,DO_SNO_AER)
   ! !PRIVATE DATA MEMBERS:
   integer,  parameter :: numrad_snw  =   5               ! number of spectral bands used in snow model [nbr]
@@ -285,11 +290,15 @@ module SnowSnicarMod
   !$acc declare create(snowage_tau(:,:,:)  )
   !$acc declare create(snowage_kappa(:,:,:))
   !$acc declare create(snowage_drdt0(:,:,:))
-  !
+  
+  !associate(&
+  ! bare_ice_indy    =   grc_pp%bare_ice_indy        
+  ! bare_ice_indx    =   grc_pp%bare_ice_indx          
+  ! )
+
   ! !REVISION HISTORY:
   ! Created by Mark Flanner
   !-----------------------------------------------------------------------
-
 contains
 
   !-----------------------------------------------------------------------
@@ -400,7 +409,7 @@ contains
     real(r8):: g_star(-nlevsno+1:0)               ! transformed (i.e. Delta-Eddington) asymmetry paramater of snow+aerosol layer
                                                   ! (lyr) [frc]
 
-    integer :: g_idx, c_idx, l_idx                ! gridcell, column, and landunit indices [idx]
+    integer :: g_idx, c_idx, l_idx             ! gridcell, column, and landunit indices [idx]
     integer :: bnd_idx                            ! spectral band index (1 <= bnd_idx <= numrad_snw) [idx]
     integer :: rds_idx                            ! snow effective radius index for retrieving
                                                   ! Mie parameters from lookup table [idx]
@@ -1514,7 +1523,7 @@ contains
   end subroutine SnowAge_grain
 
   !-----------------------------------------------------------------------
-     subroutine SnowOptics_init( )
+  subroutine SnowOptics_init()
 
       use fileutils  , only : getfil
       use elm_varctl , only : fsnowoptics, snicar_atm_type,ficephyprop
@@ -1560,6 +1569,7 @@ contains
       endif
 	  
       !
+     
       ! Open optics file:
       if(masterproc) write(iulog,*) 'Attempting to read snow optical properties .....'
       call getfil (fsnowoptics, locfn, 0)
@@ -1785,8 +1795,56 @@ contains
               ss_alb_dst4(1), ss_alb_dst4(2), ss_alb_dst4(3), ss_alb_dst4(4), ss_alb_dst4(5)
          write(iulog,*)
       end if
-      !
+     
+       !-----------------------------------------------------------------------
     end subroutine SnowOptics_init
+
+    
+    subroutine BareIceGrd(num_nourbanc, filter_nourbanc)
+  !------------------------------------------------------------------
+  ! bare ice grid information
+  !------------------------------------------------------------------
+          
+     integer           , intent(in)  :: num_nourbanc                                       ! number of columns in non-urban filter
+     integer           , intent(in)  :: filter_nourbanc(:)                                 ! column filter for non-urban points
+
+     integer  ::  thisx, thisy
+     real(r8) :: thisdist, mindist, thislon
+     integer  :: g_idx, c_idx, l_idx,fc                ! gridcell, column, and landunit indices [idx]
+          
+     do fc = 1,num_nourbanc
+               c_idx = filter_nourbanc(fc)
+               g_idx = col_pp%gridcell(c_idx)
+               l_idx = col_pp%landunit(c_idx)
+         
+          mindist=99999
+          do thisx = 1,720
+            do thisy = 1,360
+               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(thisx)
+               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(thisy)
+               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
+               if (ldomain%lonc(g_idx) .lt. 0) then
+                    if (smap1_lon(thisx) >= 180) smap1_lon(thisx) = smap1_lon(thisx)-360._r8
+               else if (ldomain%lonc(g_idx) .ge. 180) then
+                    if (smap1_lon(thisx) < 0) smap1_lon(thisx) = smap1_lon(thisx) + 360._r8
+               end if
+               thislon = smap1_lon(thisx)
+               thisdist = 100*((smap1_lat(thisy) - ldomain%latc(g_idx))**2 + &
+                    (thislon - ldomain%lonc(g_idx))**2)**0.5
+               if (thisdist .lt. mindist) then
+                    mindist = thisdist
+                    grc_pp%bare_ice_indx(g_idx) = thisx
+                    grc_pp%bare_ice_indy(g_idx) = thisy
+               end if
+
+            end do
+          end do
+     end do
+
+
+    !-----------------------------------------------------------------------
+    end subroutine BareIceGrd
 
    !-----------------------------------------------------------------------
    subroutine SnowAge_init( )
@@ -2031,6 +2089,10 @@ contains
      real(r8):: bbl_eff_rad_wgted
      integer :: bbl_eff_rad_ind
      data caldaym / 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 /
+     integer :: bare_ice_indx_lcl
+     integer :: bare_ice_indy_lcl
+
+    
      ! SNICAR_AD new variables, follow sea-ice shortwave conventions
      real(r8):: &
         trndir(-nlevsno+1:nlevice+1)  , & ! solar beam down transmission from top
@@ -2188,7 +2250,9 @@ contains
          real(r8):: tmp1                              ! temporary variable
          !mgf--
 #endif
-     integer ::  thisx, thisy, tmpx,tmpy
+     integer ::  thisx, thisy
+    ! integer :: tmpx(bounds%begg:bounds%endg)         ! index of closest model grid point x 
+    ! integer :: tmpy(bounds%begg:bounds%endg)         ! index of closest model grid point y 
      real(r8) :: thisdist, mindist, thislon
 
       ! Constants for non-spherical ice particles and dust-snow internal mixing
@@ -2323,7 +2387,6 @@ contains
               !get weights for interpolation
               call get_curr_date( yr, mon, day, tod )
               calday_curr = get_curr_calday()
-              
               aindex(1) = ((yr-1995)*12)+mon
 
               if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
@@ -2338,6 +2401,52 @@ contains
       end if 
       !ice_density_wgted = ice_density(1,1,aindex(1))*wt1+ice_density(1,1,aindex(2))*wt2
       !bbl_eff_rad_wgted = bbl_eff_rad(1,1,aindex(1))*wt1+bbl_eff_rad(1,1,aindex(2))*wt2
+
+                  ! do fc = 1,num_nourbanc
+                  !     c_idx = filter_nourbanc(fc)
+                  !     g_idx = col_pp%gridcell(c_idx)
+                  !     l_idx = col_pp%landunit(c_idx)
+
+                   !    if (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4) then  ! land ice
+
+                    !      mindist=99999
+                    !      do thisx = 1,720
+                    !        do thisy = 1,360
+                               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(thisx)
+                               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(thisy)
+                               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+                               !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
+                     !          if (ldomain%lonc(g_idx) .lt. 0) then
+                     !               if (smap1_lon(thisx) >= 180) smap1_lon(thisx) = smap1_lon(thisx)-360._r8
+                     !         else if (ldomain%lonc(g_idx) .ge. 180) then
+                     !               if (smap1_lon(thisx) < 0) smap1_lon(thisx) = smap1_lon(thisx) + 360._r8
+                     !          end if
+                     !          thislon = smap1_lon(thisx)
+                     !          thisdist = 100*((smap1_lat(thisy) - ldomain%latc(g_idx))**2 + &
+                     !               (thislon - ldomain%lonc(g_idx))**2)**0.5
+                     !          if (thisdist .lt. mindist) then
+                     !               mindist = thisdist
+                     !               tmpx(g_idx) = thisx
+                     !               tmpy(g_idx) = thisy
+                     !          end if
+                     !       
+                     !       end do
+                     !     end do
+                     !  end if
+                  ! end do
+          
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(tmpx)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(tmpy)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
+                 ! write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr,"day",day
+                 ! write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
+                 ! write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
+                 ! write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(1)),"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(2))
+                 ! write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(2))
+                 ! write(iulog,*) "CAW c",c_idx,"tmpx",tmpx,"tmpy",tmpy             
       !write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr
       !write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
       !write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
@@ -2347,7 +2456,6 @@ contains
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
       !write(iulog,*) "CAW c",c_idx,"nint(bbl_eff_rad)",nint(bbl_eff_rad_wgted)
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_ind",bbl_eff_rad_ind
-
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad",bbl_eff_rad(mon_curr),"mon+1",bbl_eff_rad(mon_curr+1)
       !write(iulog,*) "CAW c",c_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
 
@@ -2376,33 +2484,38 @@ contains
                  mu0n                      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
                  lnd_ice = 1
 
-                  mindist=99999
-                  do thisx = 1,720
-                     do thisy = 1,360
+              !    mindist=99999
+              !    do thisx = 1,720
+              !       do thisy = 1,360
                      !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(thisx)
                      !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(thisy)
                      !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
                      !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
-                        if (ldomain%lonc(g_idx) .lt. 0) then
-                             if (smap1_lon(thisx) >= 180) smap1_lon(thisx) = smap1_lon(thisx)-360._r8
-                        else if (ldomain%lonc(g_idx) .ge. 180) then
-                            if (smap1_lon(thisx) < 0) smap1_lon(thisx) = smap1_lon(thisx) + 360._r8
-                        end if
-                        thislon = smap1_lon(thisx)
-                        thisdist = 100*((smap1_lat(thisy) - ldomain%latc(g_idx))**2 + &
-                                   (thislon - ldomain%lonc(g_idx))**2)**0.5
-                        if (thisdist .lt. mindist) then
-                            mindist = thisdist
-                            tmpx = thisx
-                            tmpy = thisy
-                        end if
-                     end do
-                  end do
-                  ice_density_wgted = ice_density(tmpx,tmpy,aindex(1))*wt1+ice_density(tmpx,tmpy,aindex(2))*wt2
-                  bbl_eff_rad_wgted = bbl_eff_rad(tmpx,tmpy,aindex(1))*wt1+bbl_eff_rad(tmpx,tmpy,aindex(2))*wt2
+              !          if (ldomain%lonc(g_idx) .lt. 0) then
+              !               if (smap1_lon(thisx) >= 180) smap1_lon(thisx) = smap1_lon(thisx)-360._r8
+              !          else if (ldomain%lonc(g_idx) .ge. 180) then
+              !              if (smap1_lon(thisx) < 0) smap1_lon(thisx) = smap1_lon(thisx) + 360._r8
+              !          end if
+              !          thislon = smap1_lon(thisx)
+              !          thisdist = 100*((smap1_lat(thisy) - ldomain%latc(g_idx))**2 + &
+              !                     (thislon - ldomain%lonc(g_idx))**2)**0.5
+              !          if (thisdist .lt. mindist) then
+              !              mindist = thisdist
+              !              tmpx = thisx
+              !              tmpy = thisy
+              !          end if
+              !       end do
+              !    end do
+                 bare_ice_indx_lcl = grc_pp%bare_ice_indx(g_idx)
+                 bare_ice_indy_lcl = grc_pp%bare_ice_indy(g_idx)
 
-                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(thisx)",smap1_lon(tmpx)
-                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(thisy)",smap1_lat(tmpy)
+                 ice_density_wgted = ice_density(bare_ice_indx_lcl,bare_ice_indy_lcl,aindex(1))*wt1+ice_density(bare_ice_indx_lcl,bare_ice_indy_lcl,aindex(2))*wt2
+                 bbl_eff_rad_wgted = bbl_eff_rad(bare_ice_indx_lcl,bare_ice_indy_lcl,aindex(1))*wt1+bbl_eff_rad(bare_ice_indx_lcl,bare_ice_indy_lcl,aindex(2))*wt2
+
+                 ! write(iulog,*) "CAW c",c_idx,"g_idx",g_idx
+                 ! write(iulog,*) "CAW c",c_idx,"bare_ice_indx",bare_ice_indx_lcl,"tmpy",bare_ice_indy_lcl
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(tmpx(g_idx))",smap1_lon(bare_ice_indx_lcl)
+                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(tmpy(g_idx))",smap1_lat(bare_ice_indy_lcl)
                  ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
                  ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
                  ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
@@ -2410,9 +2523,8 @@ contains
                  ! write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr,"day",day
                  ! write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
                  ! write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
-                 ! write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(1)),"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx,tmpy,aindex(2))
-                 ! write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx,tmpy,aindex(2))
-                 ! write(iulog,*) "CAW c",c_idx,"tmpx",tmpx,"tmpy",tmpy
+                 ! write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx(g_idx),tmpy(g_idx),aindex(1)),"ice_density(tmpx,tmpy,aindex(2))",ice_density(tmpx(g_idx),tmpy(g_idx),aindex(2))
+                 ! write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx(g_idx),tmpy(g_idx),aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(2))",bbl_eff_rad(tmpx(g_idx),tmpy(g_idx),aindex(2))
 
               else 
                  snl_btm   = 0  
