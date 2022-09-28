@@ -59,7 +59,10 @@ module GridcellType
      real(r8) , pointer :: elevation   (:) => null() ! mean soil surface elevation, above mean sea level (m)
      real(r8) , pointer :: froudenum   (:) => null() ! Froude number (dimensionless)
      real(r8) , pointer :: MaxElevation   (:) => null() ! Maximum soil surface elevation, above mean sea level (meter) needed for precipitation downscaling
- 
+   
+     integer , pointer :: bare_ice_indx      (:)   => null() !
+     integer , pointer :: bare_ice_indy      (:)   => null() !
+
      !integer , pointer :: topounit_indices (:,:) => null()
 
      ! indices into landunit-level arrays for landunits in this grid cell (ispval implies
@@ -124,6 +127,9 @@ contains
     allocate(this%elevation (begg:endg)) ; this%elevation (:) = nan
     allocate(this%froudenum (begg:endg)) ; this%froudenum (:) = nan 
     allocate(this%MaxElevation (begg:endg)) ; this%MaxElevation (:) = nan
+
+    allocate(this%bare_ice_indx      (begg:endg))  ; this%bare_ice_indx      (:)   = ispval
+    allocate(this%bare_ice_indy      (begg:endg))  ; this%bare_ice_indy      (:)   = ispval
 
     allocate(this%landunit_indices(1:max_lunit, begg:endg)); this%landunit_indices(:,:) = ispval
 	

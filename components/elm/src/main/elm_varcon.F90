@@ -221,9 +221,7 @@ module elm_varcon
   ! minimum allowed snow effective radius (also "fresh snow" value) [microns]
   real(r8), public, parameter :: snw_rds_min = 54.526_r8    
   !-----------------------------------------------------------------------
-
-contains
-
+contains 
   !------------------------------------------------------------------------------
   subroutine elm_varcon_init()
     !
