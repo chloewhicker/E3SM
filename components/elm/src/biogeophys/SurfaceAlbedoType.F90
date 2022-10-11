@@ -75,6 +75,9 @@ module SurfaceAlbedoType
      real(r8), pointer :: albsoi_col           (:,:) => null() ! col soil albedo: diffuse (col,bnd) [frc]
      real(r8), pointer :: albsnd_hst_col       (:,:) => null() ! col snow albedo, direct , for history files (col,bnd) [frc]
      real(r8), pointer :: albsni_hst_col       (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
+     real(r8), pointer :: albd_ice             (:,:) => null() ! col snow albedo, direct , for history files (col,bnd) [frc]
+     real(r8), pointer :: albi_ice             (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
+     !integer , pointer :: bare_ice_flg         (:)   => null() ! flag for if there is bare land ice, for history files (col) [flg]
 
      real(r8), pointer :: fd_top_adjust        (:,:) => null() !adjustment factor for direct flux (numrad)
      real(r8), pointer :: fi_top_adjust        (:,:) => null() !adjustment factor for diffuse flux (numrad)
@@ -271,6 +274,9 @@ contains
     allocate(this%albgri_dst_col     (begc:endc,numrad))       ; this%albgri_dst_col     (:,:) =spval
     allocate(this%albd_patch         (begp:endp,numrad))       ; this%albd_patch         (:,:) =spval
     allocate(this%albi_patch         (begp:endp,numrad))       ; this%albi_patch         (:,:) =spval
+    allocate(this%albd_ice           (begc:endc,numrad))       ; this%albd_ice           (:,:) =spval !+CAW
+    allocate(this%albi_ice           (begc:endc,numrad))       ; this%albi_ice           (:,:) =spval !+CAW
+    !allocate(this%bare_ice_flg       (begc:endc))              ; this%bare_ice_flg       (:)   = 0 !+CAW
 
     allocate(this%fd_top_adjust      (begp:endp,numrad))       ; this%fd_top_adjust      (:,:) =1._r8
     allocate(this%fi_top_adjust      (begp:endp,numrad))       ; this%fi_top_adjust      (:,:) =1._r8
@@ -360,6 +366,21 @@ contains
          avgflag='A', long_name='surface albedo (indirect)', &
          ptr_patch=this%albi_patch, default='inactive', c2l_scale_type='urbanf')
     
+    this%albd_ice(begc:endc,:) = spval
+    call hist_addfld2d (fname='ALBD_ICE', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice (direct)', &
+         ptr_col=this%albd_ice, default='inactive', c2l_scale_type='urbanf')
+
+    this%albi_ice(begc:endc,:) = spval
+    call hist_addfld2d (fname='ALBI_ICE', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice (indirect)', &
+         ptr_col=this%albi_ice, default='inactive', c2l_scale_type='urbanf')
+
+    !this%bare_ice_flg(begc:endc) = 0
+    !call hist_addfld1d (fname='BARE_ICE_FLG', units='unitless', &
+    !     avgflag='A', long_name='flag for when there is bare land ice ', &
+    !     ptr_col=this%bare_ice_flg, default='inactive')
+
   end subroutine InitHistory
 
   !-----------------------------------------------------------------------
@@ -387,6 +408,8 @@ contains
     this%albsni_hst_col (begc:endc, :) = 0.6_r8
     this%albd_patch     (begp:endp, :) = 0.2_r8
     this%albi_patch     (begp:endp, :) = 0.2_r8
+    !this%albd_ice       (begc:endc, :) = 0.2_r8
+    !this%albi_ice       (begc:endc, :) = 0.2_r8
 
     this%albgrd_pur_col (begc:endc, :) = 0.2_r8
     this%albgri_pur_col (begc:endc, :) = 0.2_r8
@@ -466,6 +489,16 @@ contains
          long_name='surface albedo (diffuse) (0 to 1)', units='', &
          interpinic_flag='interp', readvar=readvar, data=this%albi_patch)
 
+  !  call restartvar(ncid=ncid, flag=flag, varname='albd_ice', xtype=ncd_double,  &
+  !       dim1name='pft', dim2name='numrad', switchdim=.true., &
+  !       long_name='ice surface albedo (direct) (0 to 1)', units='', &
+  !       interpinic_flag='interp', readvar=readvar, data=this%albd_ice)
+
+   ! call restartvar(ncid=ncid, flag=flag, varname='albi_ice', xtype=ncd_double,  &
+   !      dim1name='pft', dim2name='numrad', switchdim=.true., &
+   !      long_name='ice surface albedo (diffuse) (0 to 1)', units='', &
+   !      interpinic_flag='interp', readvar=readvar, data=this%albi_ice)
+     
     call restartvar(ncid=ncid, flag=flag, varname='albgrd', xtype=ncd_double,  &
          dim1name='column', dim2name='numrad', switchdim=.true., &
          long_name='ground albedo (direct) (0 to 1)', units='', &
