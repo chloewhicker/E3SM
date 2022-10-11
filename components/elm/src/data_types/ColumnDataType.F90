@@ -1357,7 +1357,6 @@ contains
     allocate(this%vsfm_mass_col_1d   (ncells))                        ; this%vsfm_mass_col_1d   (:)   = nan
     allocate(this%vsfm_smpl_col_1d   (ncells))                        ; this%vsfm_smpl_col_1d   (:)   = nan
     allocate(this%vsfm_soilp_col_1d  (ncells))                        ; this%vsfm_soilp_col_1d  (:)   = nan
-    !allocate(this%ice_alb            (begc:endc))                     ; this%ice_alb            (:)   = nan !+CAW
 
     !-----------------------------------------------------------------------
     ! initialize history fields for select members of col_ws
@@ -1420,11 +1419,6 @@ contains
           avgflag='A', long_name='top snow layer effective grain radius', &
            ptr_col=this%snw_rds_top, set_urb=spval, default='inactive')
 
-    !this%ice_alb(begc:endc) = spval
-    ! call hist_addfld1d (fname='ICEALB', units='fraction', &
-    !      avgflag='A', long_name='bare ice albedo', &
-    !       ptr_col=this%ice_alb, set_urb=spval, default='inactive')
-    
    this%sno_liq_top(begc:endc) = spval
      call hist_addfld1d (fname='SNOLIQFL', units='fraction', &
           avgflag='A', long_name='top snow layer liquid water fraction (land)', &
