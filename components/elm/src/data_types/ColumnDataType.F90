@@ -1453,11 +1453,6 @@ contains
           avgflag='A', long_name='top snow layer effective grain radius', &
            ptr_col=this%snw_rds_top, set_urb=spval, default='inactive')
 
-    !this%ice_alb(begc:endc) = spval
-    ! call hist_addfld1d (fname='ICEALB', units='fraction', &
-    !      avgflag='A', long_name='bare ice albedo', &
-    !       ptr_col=this%ice_alb, set_urb=spval, default='inactive')
-    
    this%sno_liq_top(begc:endc) = spval
      call hist_addfld1d (fname='SNOLIQFL', units='fraction', &
           avgflag='A', long_name='top snow layer liquid water fraction (land)', &
