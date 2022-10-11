@@ -237,8 +237,13 @@ contains
           fabd_sun_z    =>    surfalb_vars%fabd_sun_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed sunlit leaf direct  PAR (per unit lai+sai) for each canopy layer
           fabd_sha_z    =>    surfalb_vars%fabd_sha_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed shaded leaf direct  PAR (per unit lai+sai) for each canopy layer
           fabi_sun_z    =>    surfalb_vars%fabi_sun_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed sunlit leaf diffuse PAR (per unit lai+sai) for each canopy layer
-          fabi_sha_z    =>    surfalb_vars%fabi_sha_z_patch         & ! Output:  [real(r8) (:,:) ]  absorbed shaded leaf diffuse PAR (per unit lai+sai) for each canopy layer
+          fabi_sha_z    =>    surfalb_vars%fabi_sha_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed shaded leaf diffuse PAR (per unit lai+sai) for each canopy layer
+          albd_ice      =>    surfalb_vars%albd_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (direct)
+          albi_ice      =>    surfalb_vars%albi_ice                 & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
           )
+         ! albd_ice      =>    surfalb_vars%albd_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (direct)
+         ! albi_ice      =>    surfalb_vars%albi_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
+         ! bare_ice_flg  =>    surfalb_vars%bare_ice_flg           , & ! Output: 
 
     ! Cosine solar zenith angle for next time step
 
@@ -696,18 +701,25 @@ contains
           c = filter_nourbanc(fc)
              if (coszen_col(c) > 0._r8) then
  
-             if ( (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4) .and. (use_snicar_lndice) ) then   !+CAW
-         !       write(iulog,*)"CAW SURFALB c",c,"nstep",nstep
-             !   write (iulog,*) "CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
-             !   write(iulog,*)"CAW SURFALB c",c,"lun_pp%itype",lun_pp%itype(col_pp%landunit(c))            !+CAW
-             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)",albsod(c,ib)
-             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)",albsoi(c,ib)
-             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib,"frac_sno(c)",frac_sno(c)
-             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albici(c,ib)",albici(c,ib)
-             !   write(iulog,*)"CAW SURFALB c",c,"ib",ib, "albicd(c,ib)",albicd(c,ib)
-
-                albsod(c,ib) = albicd(c,ib)
-                albsoi(c,ib) = albici(c,ib)
+             if ( (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4) ) then   !+CAW
+                     if  (use_snicar_lndice) then
+                        write(iulog,*)"CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
+                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albicd",albicd(c,ib) 
+                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albicd",albicd(c,ib)      
+                        albsod(c,ib) = albicd(c,ib)
+                        albsoi(c,ib) = albici(c,ib)
+                        albd_ice(c,ib) = albicd(c,ib)
+                        albi_ice(c,ib) = albici(c,ib)
+                     else
+                        write(iulog,*)"CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
+                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albice(ib)",albice(ib)
+                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albice(ib)",albice(ib)
+                        albd_ice(c,ib) = albice(ib)
+                        albi_ice(c,ib) = albice(ib)
+                     endif
+                !if (frac_sno(c) < 1) then
+                !        bare_ice_flg(c) = 1
+                !endif
               !  write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)-chd",albsod(c,ib)
               !  write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)-chd",albsoi(c,ib)
              endif

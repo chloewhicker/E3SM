@@ -76,6 +76,8 @@ module GridcellDataType
     real(r8), pointer :: end_h2osfc         (:)   ! grid-level surface water at end of the time step (mm H2O)
     real(r8), pointer :: end_h2osoi_liq     (:)   ! grid-level liquid water at end of the time step (kg/m2)
     real(r8), pointer :: end_h2osoi_ice     (:)   ! grid-level ice lens at end of the time step (kg/m2)
+    real(r8), pointer :: bare_ice_dens      (:)   ! grid-level ice density determined by input files (kg/m3)
+    real(r8), pointer :: bare_ice_abr       (:)   ! grid-level bare ice air bbl radiud determined by input files (um)
 
   contains
     procedure, public :: Init    => grc_ws_init
@@ -385,7 +387,8 @@ contains
     allocate(this%end_h2osfc     (begg:endg))       ; this%end_h2osfc     (:)   = nan
     allocate(this%end_h2osoi_liq (begg:endg))       ; this%end_h2osoi_liq (:)   = nan
     allocate(this%end_h2osoi_ice (begg:endg))       ; this%end_h2osoi_ice (:)   = nan
-
+    allocate(this%bare_ice_dens  (begg:endg))       ; this%bare_ice_dens  (:)   = nan
+    allocate(this%bare_ice_abr   (begg:endg))       ; this%bare_ice_abr   (:)   = nan
     !-----------------------------------------------------------------------
     ! initialize history fields for select members of grc_ws
     !-----------------------------------------------------------------------
@@ -423,6 +426,16 @@ contains
     call hist_addfld1d (fname='TWS_MONTH_END',  units='mm',  &
          avgflag='I', long_name='total water storage at the end of a month', &
          ptr_lnd=this%tws_month_end)
+
+    this%bare_ice_dens(begg:endg) = spval
+    call hist_addfld1d (fname='BARE_ICE_DEN',  units='kg/m3',  &
+         avgflag='I', long_name='grid-level ice density determined by input files', &
+         ptr_lnd=this%bare_ice_dens,default='inactive')
+   
+    this%bare_ice_abr(begg:endg) = spval
+    call hist_addfld1d (fname='BARE_ICE_ABR',  units='um',  &
+         avgflag='I', long_name='grid-level bare ice air bbl radiud determined by input files', &
+         ptr_lnd=this%bare_ice_abr,default='inactive')
   end subroutine grc_ws_init
 
   !------------------------------------------------------------------------
