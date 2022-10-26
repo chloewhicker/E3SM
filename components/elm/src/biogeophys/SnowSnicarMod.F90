@@ -1617,12 +1617,12 @@ contains
       call ncd_io( 'snicaradv4_bbl_effrad', bbl_eff_rad, 'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'lat', smap1_lat, 'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'lon', smap1_lon, 'read', ncid2, posNOTonfile=.true.)
-      !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
+     ! if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,10)
-      !if(masterproc)  write(iulog,*) "CAW smap1_lon",smap1_lon
-      !if(masterproc)  write(iulog,*) "CAW smap1_lat",smap1_lat
+     ! if(masterproc)  write(iulog,*) "CAW smap1_lon",smap1_lon
+     ! if(masterproc)  write(iulog,*) "CAW smap1_lat",smap1_lat
       
       !$acc update device( &
       !$acc ss_alb_snw_drc     ,&
@@ -2455,7 +2455,7 @@ contains
       ! (when called from CSIM, there is only one column)
        do fc = 1,num_nourbanc
           c_idx = filter_nourbanc(fc)
-          
+
          ! set snow/ice mass to be used for RT:
           if (flg_snw_ice == 1) then
              h2osno_lcl = h2osno(c_idx)
@@ -2479,15 +2479,18 @@ contains
                  bare_ice_indx_lcl = grc_pp%bare_ice_indx(g_idx)
                  bare_ice_indy_lcl = grc_pp%bare_ice_indy(g_idx)
 
-                 if ( (ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) == 850).and.(ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))==850)) then  
-                        ice_density_wgted = 905
-                        bbl_eff_rad_wgted = 750
+                ! if ( (ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) == 850)&
+                !         .and.(ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))==850)) then  
+                !        ice_density_wgted = 910
+                !        bbl_eff_rad_wgted = 750
                        ! write (iulog,*) "CAW c",c_idx,"chg ice_den", ice_density_wgted
                        ! write (iulog,*) "CAW c",c_idx,"chg ABR", bbl_eff_rad_wgted
-                else
-                        ice_density_wgted = ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1+ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
-                        bbl_eff_rad_wgted = bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1+bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
-                endif
+                !else
+                        ice_density_wgted = ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 & 
+                                +ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
+                        bbl_eff_rad_wgted = bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
+                                +bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
+                !endif
                  grc_ws%bare_ice_dens(g_idx) = ice_density_wgted
                  grc_ws%bare_ice_abr(g_idx)  = bbl_eff_rad_wgted
 
