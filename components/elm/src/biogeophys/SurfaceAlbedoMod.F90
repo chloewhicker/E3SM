@@ -703,17 +703,17 @@ contains
  
              if ( (lun_pp%itype(col_pp%landunit(c)) == 3 .or. lun_pp%itype(col_pp%landunit(c))== 4) ) then   !+CAW
                      if  (use_snicar_lndice) then
-                        write(iulog,*)"CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
-                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albicd",albicd(c,ib) 
-                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albicd",albicd(c,ib)      
+                        !write(iulog,*)"CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
+                        !write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albicd",albicd(c,ib) 
+                        !write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albicd",albicd(c,ib)      
                         albsod(c,ib) = albicd(c,ib)
                         albsoi(c,ib) = albici(c,ib)
                         albd_ice(c,ib) = albicd(c,ib)
                         albi_ice(c,ib) = albici(c,ib)
                      else
-                        write(iulog,*)"CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
-                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albice(ib)",albice(ib)
-                        write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albice(ib)",albice(ib)
+                       ! write(iulog,*)"CAW SURFALB c",c,"use_snicar_lndice",use_snicar_lndice
+                       ! write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albice(ib)",albice(ib)
+                       ! write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albice(ib)",albice(ib)
                         albd_ice(c,ib) = albice(ib)
                         albi_ice(c,ib) = albice(ib)
                      endif
