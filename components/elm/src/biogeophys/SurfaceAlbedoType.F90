@@ -77,6 +77,9 @@ module SurfaceAlbedoType
      real(r8), pointer :: albsni_hst_col       (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
      real(r8), pointer :: albd_ice             (:,:) => null() ! col snow albedo, direct , for history files (col,bnd) [frc]
      real(r8), pointer :: albi_ice             (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
+     
+     real(r8), pointer  :: fsr_vis_d_ln_ice_col    (:) => null() ! COL LAND ICE reflected direct beam vis solar radiation at local noon (W/m**2) +CAW
+     real(r8), pointer  :: fsr_nir_d_ln_ice_col    (:) => null() ! COL LAND ICE patch reflected direct beam nir solar radiation at local noon (W/m**2) CAW
      !integer , pointer :: bare_ice_flg         (:)   => null() ! flag for if there is bare land ice, for history files (col) [flg]
 
      real(r8), pointer :: fd_top_adjust        (:,:) => null() !adjustment factor for direct flux (numrad)
@@ -276,6 +279,9 @@ contains
     allocate(this%albi_patch         (begp:endp,numrad))       ; this%albi_patch         (:,:) =spval
     allocate(this%albd_ice           (begc:endc,numrad))       ; this%albd_ice           (:,:) =spval !+CAW
     allocate(this%albi_ice           (begc:endc,numrad))       ; this%albi_ice           (:,:) =spval !+CAW
+    
+    allocate(this%fsr_vis_d_ln_ice_col    (begc:endc))              ; this%fsr_vis_d_ln_ice_col    (:)   = spval
+    allocate(this%fsr_nir_d_ln_ice_col    (begc:endc))              ; this%fsr_nir_d_ln_ice_col    (:)   = spval
     !allocate(this%bare_ice_flg       (begc:endc))              ; this%bare_ice_flg       (:)   = 0 !+CAW
 
     allocate(this%fd_top_adjust      (begp:endp,numrad))       ; this%fd_top_adjust      (:,:) =1._r8
@@ -376,6 +382,17 @@ contains
          avgflag='A', long_name='surface albedo of ice (indirect)', &
          ptr_col=this%albi_ice, default='inactive', c2l_scale_type='urbanf')
 
+    this%fsr_nir_d_ln_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRNDLN_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct nir reflected solar radiation at local noon over lnd ice', &
+         ptr_col=this%fsr_nir_d_ln_ice_col, default='inactive')
+
+    this%fsr_vis_d_ln_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRVDLN_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct vis reflected solar radiation at local noon over lnd ice', &
+         ptr_col=this%fsr_vis_d_ln_ice_col, default='inactive')
+
+
     !this%bare_ice_flg(begc:endc) = 0
     !call hist_addfld1d (fname='BARE_ICE_FLG', units='unitless', &
     !     avgflag='A', long_name='flag for when there is bare land ice ', &
@@ -408,8 +425,8 @@ contains
     this%albsni_hst_col (begc:endc, :) = 0.6_r8
     this%albd_patch     (begp:endp, :) = 0.2_r8
     this%albi_patch     (begp:endp, :) = 0.2_r8
-    !this%albd_ice       (begc:endc, :) = 0.2_r8
-    !this%albi_ice       (begc:endc, :) = 0.2_r8
+    this%albd_ice       (begc:endc, :) = 0.2_r8
+    this%albi_ice       (begc:endc, :) = 0.2_r8
 
     this%albgrd_pur_col (begc:endc, :) = 0.2_r8
     this%albgri_pur_col (begc:endc, :) = 0.2_r8

@@ -102,10 +102,11 @@ contains
     type(bounds_type), intent(in) :: bounds
     !
     ! !LOCAL VARIABLES:
-    integer :: begp, endp
+    integer :: begp, endp !, begc, endc
     !---------------------------------------------------------------------
 
     begp = bounds%begp; endp = bounds%endp
+    !begc = bounds%begc; endc = bounds%endc ! +CAW
 
     allocate(this%sfc_frc_aer_patch     (begp:endp))              ; this%sfc_frc_aer_patch     (:)   = spval
     allocate(this%sfc_frc_bc_patch      (begp:endp))              ; this%sfc_frc_bc_patch      (:)   = spval
@@ -327,7 +328,7 @@ contains
       !$acc routine seq
      use elm_varpar       , only : numrad, nlevsno
      use elm_varcon       , only : spval, degpsec, isecspday
-     use landunit_varcon  , only : istsoil, istcrop
+     use landunit_varcon  , only : istsoil, istcrop, istice_mec, istice
      use elm_varctl       , only : subgridflag, use_snicar_frc
      use SnowSnicarMod    , only : DO_SNO_OC
      !
@@ -427,6 +428,8 @@ contains
           albgri_pur      =>    surfalb_vars%albgri_pur_col       , & ! Input:  [real(r8) (:,:) ] pure snow ground albedo (diffuse)
           albgrd_bc       =>    surfalb_vars%albgrd_bc_col        , & ! Input:  [real(r8) (:,:) ] ground albedo without BC (direct) (col,bnd)
           albgri_bc       =>    surfalb_vars%albgri_bc_col        , & ! Input:  [real(r8) (:,:) ] ground albedo without BC (diffuse) (col,bnd)
+          albd_ice        =>    surfalb_vars%albd_ice             , & ! Input:  [real(r8) (:,:) ]  ice surface albedo (direct)  + CAW
+          albi_ice        =>    surfalb_vars%albi_ice             , & ! Input:  [real(r8) (:,:) ]  ice surface albedo (diffuse) + CAW
           tlai            =>    canopystate_vars%tlai_patch       , & ! Input:  [real(r8) (:)   ] one-sided leaf area index
           elai            =>    canopystate_vars%elai_patch       , & ! Input:  [real(r8) (:)   ] one-sided leaf area index with burying by snow
           esai            =>    canopystate_vars%esai_patch       , & ! Input:  [real(r8) (:)   ] one-sided stem area index with burying by snow
@@ -455,6 +458,8 @@ contains
           fsds_vis_d      =>    surfrad_vars%fsds_vis_d_patch     , & ! Output: [real(r8) (:)   ] incident direct beam vis solar radiation (W/m**2)
           fsds_vis_i      =>    surfrad_vars%fsds_vis_i_patch     , & ! Output: [real(r8) (:)   ] incident diffuse vis solar radiation (W/m**2)
           fsds_vis_d_ln   =>    surfrad_vars%fsds_vis_d_ln_patch  , & ! Output: [real(r8) (:)   ] incident direct beam vis solar rad at local noon (W/m**2)
+          fsr_vis_d_ln_ice =>   surfalb_vars%fsr_vis_d_ln_ice_col , & ! Output: [real(r8) (:)
+          fsr_nir_d_ln_ice =>   surfalb_vars%fsr_nir_d_ln_ice_col , & ! Output: [real(r8) (:)
           sfc_frc_aer     =>    surfrad_vars%sfc_frc_aer_patch    , & ! Output: [real(r8) (:)   ] surface forcing of snow with all aerosols (pft) [W/m2]
           sfc_frc_aer_sno =>    surfrad_vars%sfc_frc_aer_sno_patch, & ! Output: [real(r8) (:)   ] surface forcing of snow with all aerosols, averaged only when snow is present (pft) [W/m2]
           sfc_frc_bc      =>    surfrad_vars%sfc_frc_bc_patch     , & ! Output: [real(r8) (:)   ] surface forcing of snow with BC (pft) [W/m2]
@@ -475,8 +480,7 @@ contains
 
           dtime = dtime_mod
           secs = secs_curr
- 
-
+          
        ! Initialize fluxes
        do fp = 1,num_nourbanp
           p = filter_nourbanp(fp)
@@ -753,6 +757,8 @@ contains
           p = filter_nourbanp(fp)
           t = veg_pp%topounit(p)
           g = veg_pp%gridcell(p)
+          c = veg_pp%column(p) ! +CAW 
+          l = veg_pp%landunit(p)
 
           ! NDVI and reflected solar radiation
 
@@ -778,6 +784,20 @@ contains
              fsr_nir_d_ln(p) = albd(p,2)*forc_solad(t,2)
              fsds_vis_i_ln(p) = forc_solai(t,1)
              parveg_ln(p)     = parveg(p)
+        
+             if (lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) then 
+                fsr_vis_d_ln_ice(c) = albd_ice(c,1)*forc_solad(t,1)
+                fsr_nir_d_ln_ice(c) = albd_ice(c,2)*forc_solad(t,2)
+                !write(iulog,*)"CAW c=",c,"forc_solad(t,1)=",forc_solad(t,1)
+                !write(iulog,*)"CAW c=",c,"forc_solad(t,2)=",forc_solad(t,2)
+                !write(iulog,*)"CAW c=",c,"albd_ice(c,1)=",albd_ice(c,1)
+                !write(iulog,*)"CAW c=",c,"albd_ice(c,2)=",albd_ice(c,2)
+                !write(iulog,*)"CAW c=",c,"fsr_nir_d_ln_ice=",fsr_nir_d_ln_ice(c)
+                !write(iulog,*)"CAW c=",c,"fsr_vis_d_ln_ice=",fsr_vis_d_ln_ice(c)
+             else
+                fsr_vis_d_ln_ice(c) = spval
+                fsr_nir_d_ln_ice(c) = spval
+             end if 
           else
              fsds_vis_d_ln(p) = spval
              fsds_nir_d_ln(p) = spval
@@ -785,6 +805,9 @@ contains
              fsr_nir_d_ln(p) = spval
              fsds_vis_i_ln(p) = spval
              parveg_ln(p)     = spval
+
+             fsr_vis_d_ln_ice(c) = spval
+             fsr_nir_d_ln_ice(c) = spval
           end if
 
           ! diagnostic variables (downwelling and absorbed radiation partitioning) for history files
