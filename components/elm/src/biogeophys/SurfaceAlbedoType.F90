@@ -425,8 +425,8 @@ contains
     this%albsni_hst_col (begc:endc, :) = 0.6_r8
     this%albd_patch     (begp:endp, :) = 0.2_r8
     this%albi_patch     (begp:endp, :) = 0.2_r8
-    this%albd_ice       (begc:endc, :) = 0.2_r8
-    this%albi_ice       (begc:endc, :) = 0.2_r8
+    !this%albd_ice       (begc:endc, :) = 0.2_r8
+    !this%albi_ice       (begc:endc, :) = 0.2_r8
 
     this%albgrd_pur_col (begc:endc, :) = 0.2_r8
     this%albgri_pur_col (begc:endc, :) = 0.2_r8
