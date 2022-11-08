@@ -77,6 +77,7 @@ module GridcellDataType
     real(r8), pointer :: end_h2osoi_ice     (:)   ! grid-level ice lens at end of the time step (kg/m2)
     real(r8), pointer :: bare_ice_dens      (:)   ! grid-level ice density determined by input files (kg/m3)
     real(r8), pointer :: bare_ice_abr       (:)   ! grid-level bare ice air bbl radiud determined by input files (um)
+    real(r8), pointer :: bare_ice_bccnc     (:)
 
   contains
     procedure, public :: Init    => grc_ws_init
@@ -388,6 +389,7 @@ contains
     allocate(this%end_h2osoi_ice (begg:endg))       ; this%end_h2osoi_ice (:)   = nan
     allocate(this%bare_ice_dens  (begg:endg))       ; this%bare_ice_dens  (:)   = nan
     allocate(this%bare_ice_abr   (begg:endg))       ; this%bare_ice_abr   (:)   = nan
+    allocate(this%bare_ice_bccnc (begg:endg))       ; this%bare_ice_bccnc (:)   = nan
     !-----------------------------------------------------------------------
     ! initialize history fields for select members of grc_ws
     !-----------------------------------------------------------------------
@@ -435,6 +437,12 @@ contains
     call hist_addfld1d (fname='BARE_ICE_ABR',  units='um',  &
          avgflag='I', long_name='grid-level bare ice air bbl radiud determined by input files', &
          ptr_lnd=this%bare_ice_abr,default='inactive')
+
+    this%bare_ice_bccnc(begg:endg) = spval
+    call hist_addfld1d (fname='BARE_ICE_BC_CNC',  units='um',  &
+         avgflag='I', long_name='grid-level bare ice bc concentration determined by input files', &
+         ptr_lnd=this%bare_ice_bccnc,default='inactive')
+
   end subroutine grc_ws_init
 
   !------------------------------------------------------------------------
