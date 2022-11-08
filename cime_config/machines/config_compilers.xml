@@ -1181,14 +1181,14 @@ flags should be captured within MPAS CMake files.
     <base> --host=cray </base>
   </CONFIG_ARGS>
   <CFLAGS>
-    <append MPILIB="impi"> -axMIC-AVX512 -xCORE-AVX2 </append>
+    <append MPILIB="impi"> -mcmodel=medium -axMIC-AVX512 -xCORE-AVX2</append>
   </CFLAGS>
   <CPPDEFS>
     <append> -DARCH_MIC_KNL </append>
   </CPPDEFS>
   <FFLAGS>
     <base> -convert big_endian -assume byterecl -ftz -traceback -assume realloc_lhs -fp-model consistent -fimf-use-svml </base>
-    <append DEBUG="FALSE"> -O2 -debug minimal -qno-opt-dynamic-align</append>
+    <append DEBUG="FALSE"> -mcmodel=medium -O2 -debug minimal -qno-opt-dynamic-align</append>
     <append MPILIB="impi"> -xMIC-AVX512 </append>
     <append> -DHAVE_ERF_INTRINSICS </append>
   </FFLAGS>
@@ -1208,17 +1208,17 @@ flags should be captured within MPAS CMake files.
   <SCXX> icpc </SCXX>
   <SFC> ifort </SFC>
   <SLIBS>
-    <append> -L$ENV{NETCDF_DIR} -lnetcdff -Wl,--as-needed,-L$ENV{NETCDF_DIR}/lib -lnetcdff -lnetcdf </append>
+    <append> -mcmodel=medium -L$ENV{NETCDF_DIR} -lnetcdff -Wl,--as-needed,-L$ENV{NETCDF_DIR}/lib -lnetcdff -lnetcdf </append>
     <append> -mkl -lpthread </append>
   </SLIBS>
 </compiler>
 
 <compiler MACH="cori-knl" COMPILER="gnu">
   <CFLAGS>
-    <append DEBUG="FALSE"> -O2 </append>
+    <append DEBUG="FALSE"> -mcmodel=medium -O2 </append>
   </CFLAGS>
   <FFLAGS>
-    <append DEBUG="FALSE"> -O2 </append>
+    <append DEBUG="FALSE"> -mcmodel=medium -O2 </append>
   </FFLAGS>
   <CXX_LIBS>
     <base>-lstdc++</base>
