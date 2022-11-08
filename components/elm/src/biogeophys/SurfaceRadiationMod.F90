@@ -785,7 +785,7 @@ contains
              fsds_vis_i_ln(p) = forc_solai(t,1)
              parveg_ln(p)     = parveg(p)
         
-             if (lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) then 
+             if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1) then 
                 fsr_vis_d_ln_ice(c) = albd_ice(c,1)*forc_solad(t,1)
                 fsr_nir_d_ln_ice(c) = albd_ice(c,2)*forc_solad(t,2)
                 !write(iulog,*)"CAW c=",c,"forc_solad(t,1)=",forc_solad(t,1)

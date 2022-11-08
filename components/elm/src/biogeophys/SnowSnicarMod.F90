@@ -129,7 +129,7 @@ module SnowSnicarMod
   integer,  parameter :: num_lons = 720
   real(r8) :: ice_density(num_lons,num_lats,num_mons)
   real(r8) :: bbl_eff_rad(num_lons,num_lats,num_mons)
- 
+  real(r8) :: lnd_ice_bc(num_lons,num_lats,num_mons)
   real(r8) :: smap1_lat(num_lats)
   real(r8) :: smap1_lon(num_lons) 
   ! diffuse radiation weighted ice optical properties
@@ -1581,7 +1581,8 @@ contains
       call ncd_io( 'ss_alb_ice_dfs', ss_alb_snw_dfs,           'read', ncid, posNOTonfile=.true.)
       call ncd_io( 'asm_prm_ice_dfs', asm_prm_snw_dfs,         'read', ncid, posNOTonfile=.true.)
       call ncd_io( 'ext_cff_mss_ice_dfs', ext_cff_mss_snw_dfs, 'read', ncid, posNOTonfile=.true.)
-	  
+      
+      
       !!! Direct and diffuse flux under different atmospheric conditions
       ! Direct-beam incident spectral flux: 
       call ncd_io( 'flx_wgt_dir', flx_wgt_dir,           'read', ncid, readvar=readvar, posNOTonfile=.true.)
@@ -1613,16 +1614,18 @@ contains
       call getfil (ficephyprop, locfn2, 0)
       call ncd_pio_openfile(ncid2, locfn2, 0)
       if(masterproc) write(iulog,*) subname,trim(ficephyprop)
-      call ncd_io( 'snicaradv4_ice_rho', ice_density, 'read', ncid2, posNOTonfile=.true.)
-      call ncd_io( 'snicaradv4_bbl_effrad', bbl_eff_rad, 'read', ncid2, posNOTonfile=.true.)
-      call ncd_io( 'lat', smap1_lat, 'read', ncid2, posNOTonfile=.true.)
-      call ncd_io( 'lon', smap1_lon, 'read', ncid2, posNOTonfile=.true.)
-     ! if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
+      call ncd_io( 'snicaradv4_ice_rho', ice_density,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'snicaradv4_bbl_effrad', bbl_eff_rad,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'snicaradv4_bc_conc', lnd_ice_bc,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'lat', smap1_lat,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'lon', smap1_lon,'read', ncid2, posNOTonfile=.true.)
+      !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
       !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,10)
      ! if(masterproc)  write(iulog,*) "CAW smap1_lon",smap1_lon
      ! if(masterproc)  write(iulog,*) "CAW smap1_lat",smap1_lat
+      !if(masterproc) write(iulog,*) "CAW lnd_ice_bc",lnd_ice_bc(2,80,:)
       
       !$acc update device( &
       !$acc ss_alb_snw_drc     ,&
@@ -2086,6 +2089,7 @@ contains
      real(r8):: wt2                                ! weighting scheme for ice density 
      real(r8):: ice_density_wgted
      real(r8):: bbl_eff_rad_wgted
+     real(r8):: ice_bc_conc_wgted
      integer :: bbl_eff_rad_ind
      data caldaym / 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 /
      integer :: bare_ice_indx_lcl
@@ -2250,9 +2254,7 @@ contains
          !mgf--
 #endif
      integer ::  thisx, thisy
-    ! integer :: tmpx(bounds%begg:bounds%endg)         ! index of closest model grid point x 
-    ! integer :: tmpy(bounds%begg:bounds%endg)         ! index of closest model grid point y 
-     real(r8) :: thisdist, mindist, thislon
+     ! real(r8) :: thisdist, mindist, thislon
 
       ! Constants for non-spherical ice particles and dust-snow internal mixing
       real(r8) :: g_b2(7)
@@ -2478,7 +2480,10 @@ contains
 
                  bare_ice_indx_lcl = grc_pp%bare_ice_indx(g_idx)
                  bare_ice_indy_lcl = grc_pp%bare_ice_indy(g_idx)
-
+                
+                
+                ice_bc_conc_wgted = lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
+                                  +lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2 
                 ! if ( (ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) == 850)&
                 !         .and.(ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))==850)) then  
                 !        ice_density_wgted = 910
@@ -2493,6 +2498,7 @@ contains
                 !endif
                  grc_ws%bare_ice_dens(g_idx) = ice_density_wgted
                  grc_ws%bare_ice_abr(g_idx)  = bbl_eff_rad_wgted
+                 grc_ws%bare_ice_bccnc(g_idx)= ice_bc_conc_wgted
 
                 ! write(iulog,*) "CAW c",c_idx,"g_idx",g_idx
                 ! write(iulog,*) "CAW c",c_idx,"bare_ice_indx",bare_ice_indx_lcl,"tmpy",bare_ice_indy_lcl
@@ -2531,7 +2537,13 @@ contains
              flx_abs(c_idx,i,:) = 0._r8
           enddo 
 
-         
+
+          !if ( (lun_pp%itype(l_idx) == 3 .or. lun_pp%itype(l_idx) == 4) .and. (use_snicar_lndice) ) then 
+          !      mss_cnc_aer_lcl(1:11,1) = ice_bc_conc_wgted/11
+                !write (iulog,*) "CAW c",c_idx,"ice_bc_conc_wgted", ice_bc_conc_wgted
+                !write (iulog,*) "CAW c",c_idx,"mss_cnc_aer_lcl(1:5,1)",mss_cnc_aer_lcl(1:5,1)
+          !endif
+
           ! Qualifier for computing snow RT:
           !  1) sunlight from atmosphere model
           !  2) minimum amount of snow on ground.
@@ -2617,6 +2629,7 @@ contains
                 mss_cnc_aer_lcl(-nlevsno+1:0,j) = mss_cnc_aer_in(c_idx,:,j)
                 !write (iulog,*) "CAW c",c_idx, "j",j,"mss_cnc_aer_lcl", mss_cnc_aer_lcl(:,j)
              enddo
+
 
              !write (iulog,*) "CAW c",c_idx," albsfc(c_idx,1)", albsfc(c_idx,1)
              !write (iulog,*) "CAW c",c_idx," albsfc(c_idx,2)", albsfc(c_idx,2)
@@ -2737,7 +2750,13 @@ contains
                    if ( (numrad_snw == 3).and.(bnd_idx == 3) ) then
                       mss_cnc_aer_lcl(:,:) = 0._r8
                    endif
-
+                  
+                  if ( (lnd_ice == 1) ) then
+                         mss_cnc_aer_lcl(1:11,1) = ice_bc_conc_wgted/11
+                         if (bnd_idx > 1) then
+                            mss_cnc_aer_lcl(1:11,1) = 0._r8
+                         endif
+                  endif 
                    ! Define local Mie parameters based on snow grain size and aerosol species,
                    !  retrieved from a lookup table.
                    if (flg_slr_in == 1) then
@@ -3016,8 +3035,9 @@ contains
                          tau_aer(i,j) = L_aer(i,j)*ext_cff_mss_aer_lcl(j)
                       enddo
 
-                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_aer=",L_aer(i,:)
-
+                     ! if ((i>0) .and. (i<6)) then
+                     !   write(iulog,*) "CAW c",c_idx,"layer",i,"bc",mss_cnc_aer_lcl(i,1)
+                     ! endif 
                       tau_sum   = 0._r8
                       omega_sum = 0._r8
                       g_sum     = 0._r8
@@ -3645,9 +3665,9 @@ contains
 #endif
 
              ! Set local aerosol array
-             do j=1,sno_nbr_aer
-                mss_cnc_aer_lcl(:,j) = 0._r8!mss_cnc_aer_in(c_idx,:,j)
-             enddo
+             !do j=1,sno_nbr_aer
+             !   mss_cnc_aer_lcl(:,j) = 0._r8!mss_cnc_aer_in(c_idx,:,j)
+             !enddo
 
 
              ! Set spectral underlying surface albedos to their corresponding VIS or NIR albedos
@@ -3717,6 +3737,13 @@ contains
              ! Loop over snow spectral bands
              exp_min = exp(-argmax)
              do bnd_idx = 1,numrad_snw
+
+                  if ( (lnd_ice == 1) ) then
+                         mss_cnc_aer_lcl(1:11,1) = ice_bc_conc_wgted/11
+                         if (bnd_idx > 1) then
+                            mss_cnc_aer_lcl(1:11,1) = 0._r8
+                         endif
+                  endif
 
                ! note that we can remove flg_dover since this algorithm is
                ! stable for mu_not > 0.01
@@ -3933,6 +3960,10 @@ contains
                          L_aer(i,j)   = L_snw(i)*mss_cnc_aer_lcl(i,j)
                          tau_aer(i,j) = L_aer(i,j)*ext_cff_mss_aer_lcl(j)
                       enddo
+
+                     ! if ((i>0) .and. (i<6)) then
+                     !   write(iulog,*) "CAW bare_ice c",c_idx,"layer",i,"bc",mss_cnc_aer_lcl(i,1)
+                     ! endif
 
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_aer=",L_aer(i,:)
 
