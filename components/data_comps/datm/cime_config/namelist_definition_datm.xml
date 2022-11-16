@@ -318,7 +318,7 @@
       <value stream="CLMCRUNCEP">domain.lnd.360x720.130305.nc</value>
       <value stream="CLMGSWP3v1">domain.lnd.360x720_gswp3.0v1.c170606.nc</value>
       <value stream="CLMGSWP3">domain.lnd.360x720_gswp3.0v1.c170606.nc</value>
-      <value stream="ELMERA5">domain.lnd.era5rgr1440x721_oEC60to30v3.220621.nc</value>
+      <value stream="ELMERA5">domain.lnd.era5_721x1440_rdrlat_EC30to60E2r2.221115.nc</value>
       <value stream="CLMMOSARTTEST">domain.lnd.nldas2_0224x0464_c110415.nc</value>
       <value stream="CLMNLDAS2">domain.lnd.0.125nldas2_0.125nldas2.190410.nc</value>
       <value stream="CORE2_NYF.GISS">nyf.giss.T62.051007.nc</value>
@@ -2074,8 +2074,8 @@
       <value stream="CPLHISTForcing.State1hr">900</value>
       <value stream="presaero.cplhist">0</value>
       <value stream="topo.cplhist">0</value>
-      <value stream="ELMERA5.msdrswrf">-1800</value>
-      <value stream="ELMERA5.msdfswrf">-1800</value>
+      <value stream="ELMERA5.msdrswrf">-3600</value>
+      <value stream="ELMERA5.msdfswrf">-3600</value>
       <value stream="ELMERA5.mcpr">-60</value>
       <value stream="ELMERA5.mlspr">-60</value>
       <value stream="ELMERA5.msdwlwrf">-60</value>
