@@ -1317,7 +1317,7 @@ contains
     use elm_varctl       , only : iulog
     use elm_varcon       , only : tfrz, hfus, grav
     use column_varcon    , only : icol_roof, icol_sunwall, icol_shadewall, icol_road_perv
-    use landunit_varcon  , only : istsoil, istcrop, istice_mec
+    use landunit_varcon  , only : istsoil, istcrop, istice_mec, istice
     !
     ! !ARGUMENTS:
     type(bounds_type)      , intent(in)    :: bounds
@@ -1644,7 +1644,7 @@ contains
             ! as computed in HydrologyDrainageMod.F90.
 
             l = col_pp%landunit(c)
-            if (lun_pp%itype(l)==istice_mec) then
+            if ( (lun_pp%itype(l)==istice) .or. (lun_pp%itype(l)==istice_mec) ) then
 
                if (j>=1 .and. h2osoi_liq(c,j) > 0._r8) then   ! ice layer with meltwater
                   ! melting corresponds to a negative ice flux

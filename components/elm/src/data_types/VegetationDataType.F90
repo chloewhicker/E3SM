@@ -5502,12 +5502,12 @@ module VegetationDataType
 
     !end if
 
-    !if (use_cn) then
+   ! if (use_cn) then
        this%qflx_snow_grnd(begp:endp) = spval
        call hist_addfld1d (fname='QFLX_SNOW_GRND', units='mm H2O/s', &
             avgflag='A', long_name='snow on ground after interception', &
             ptr_patch=this%qflx_snow_grnd, default='inactive', c2l_scale_type='urbanf')
-    !end if
+   ! end if
 
     if (use_cn) then
        this%qflx_evap_grnd(begp:endp) = spval

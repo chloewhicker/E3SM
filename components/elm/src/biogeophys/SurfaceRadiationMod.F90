@@ -458,8 +458,12 @@ contains
           fsds_vis_d      =>    surfrad_vars%fsds_vis_d_patch     , & ! Output: [real(r8) (:)   ] incident direct beam vis solar radiation (W/m**2)
           fsds_vis_i      =>    surfrad_vars%fsds_vis_i_patch     , & ! Output: [real(r8) (:)   ] incident diffuse vis solar radiation (W/m**2)
           fsds_vis_d_ln   =>    surfrad_vars%fsds_vis_d_ln_patch  , & ! Output: [real(r8) (:)   ] incident direct beam vis solar rad at local noon (W/m**2)
-          fsr_vis_d_ln_ice =>   surfalb_vars%fsr_vis_d_ln_ice_col , & ! Output: [real(r8) (:)
-          fsr_nir_d_ln_ice =>   surfalb_vars%fsr_nir_d_ln_ice_col , & ! Output: [real(r8) (:)
+          fsr_vis_d_ln_ice =>   surfalb_vars%fsr_vis_d_ln_ice_col , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam vis solar radiation at local noon (W/m**2) +CAW
+          fsr_nir_d_ln_ice =>   surfalb_vars%fsr_nir_d_ln_ice_col , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam nir solar radiation at local noon (W/m**2) +CAW
+          fsr_vis_d_ice    =>   surfalb_vars%fsr_vis_d_ice_col    , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam vis solar radiation (W/m**2) +CAW
+          fsr_nir_d_ice    =>   surfalb_vars%fsr_nir_d_ice_col    , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam nir solar radiation (W/m**2) +CAW
+          fsr_vis_i_ice    =>   surfalb_vars%fsr_vis_i_ice_col    , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected diffuse beam vis solar radiation (W/m**2) +CAW
+          fsr_nir_i_ice    =>   surfalb_vars%fsr_nir_i_ice_col    , & ! Output: [real(r8) (:)   ]  COL LAND ICE reflected diffuse beam nir solar radiation (W/m**2) +CAW
           sfc_frc_aer     =>    surfrad_vars%sfc_frc_aer_patch    , & ! Output: [real(r8) (:)   ] surface forcing of snow with all aerosols (pft) [W/m2]
           sfc_frc_aer_sno =>    surfrad_vars%sfc_frc_aer_sno_patch, & ! Output: [real(r8) (:)   ] surface forcing of snow with all aerosols, averaged only when snow is present (pft) [W/m2]
           sfc_frc_bc      =>    surfrad_vars%sfc_frc_bc_patch     , & ! Output: [real(r8) (:)   ] surface forcing of snow with BC (pft) [W/m2]
@@ -774,6 +778,18 @@ contains
           fsr_nir_d(p)  = albd(p,2)*forc_solad(t,2)
           fsr_vis_i(p)  = albi(p,1)*forc_solai(t,1)
           fsr_nir_i(p)  = albi(p,2)*forc_solai(t,2)
+
+          if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1) then
+                fsr_vis_d_ice(c) = albd_ice(c,1)*forc_solad(t,1)
+                fsr_nir_d_ice(c) = albd_ice(c,2)*forc_solad(t,2)
+                fsr_vis_i_ice(c) = albi_ice(c,1)*forc_solai(t,1)
+                fsr_nir_i_ice(c) = albi_ice(c,2)*forc_solai(t,2)
+          else
+                fsr_vis_d_ice(c) = spval
+                fsr_nir_d_ice(c) = spval
+                fsr_vis_i_ice(c) = spval
+                fsr_nir_i_ice(c) = spval
+          end if
 
           local_secp1 = secs + nint((grc_pp%londeg(g)/degpsec)/dtime)*dtime
           local_secp1 = mod(local_secp1,isecspday)
