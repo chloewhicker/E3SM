@@ -440,7 +440,7 @@ contains
          ptr_lnd=this%bare_ice_abr,default='inactive')
 
     this%bare_ice_bccnc(begg:endg) = spval
-    call hist_addfld1d (fname='BARE_ICE_BC_CNC',  units='um',  &
+    call hist_addfld1d (fname='BARE_ICE_BC_CNC',  units='kg/kg',  &
          avgflag='I', long_name='grid-level bare ice bc concentration determined by input files', &
          ptr_lnd=this%bare_ice_bccnc,default='inactive')
 
