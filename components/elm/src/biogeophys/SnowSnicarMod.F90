@@ -2484,6 +2484,7 @@ contains
                 
                 ice_bc_conc_wgted = lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
                                   +lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2 
+                ice_bc_conc_wgted=ice_bc_conc_wgted*1.e-09_r8 ! convert from ng/g -> kg/kg 
                 ! if ( (ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) == 850)&
                 !         .and.(ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))==850)) then  
                 !        ice_density_wgted = 910
@@ -2752,9 +2753,9 @@ contains
                    endif
                   
                   if ( (lnd_ice == 1) ) then
-                         mss_cnc_aer_lcl(1:11,1) = ice_bc_conc_wgted/11
+                         mss_cnc_aer_lcl(1:10,1) = ice_bc_conc_wgted
                          if (bnd_idx > 1) then
-                            mss_cnc_aer_lcl(1:11,1) = 0._r8
+                            mss_cnc_aer_lcl(1:10,1) = 0._r8
                          endif
                   endif 
                    ! Define local Mie parameters based on snow grain size and aerosol species,
@@ -3620,8 +3621,8 @@ contains
              albout(c_idx,1) = 0._r8
              albout(c_idx,2) = 0._r8
           endif    ! if column has snow and coszen > 0
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-     !!!!!!!!!!!!! 
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! 
        ! if were over land ice calculate the albedo of bare ice  
        if ( (coszen(c_idx) > 0._r8) .and. (lnd_ice ==1) ) then
                   snl_lcl           =  0  
@@ -3738,10 +3739,11 @@ contains
              exp_min = exp(-argmax)
              do bnd_idx = 1,numrad_snw
 
+             mss_cnc_aer_lcl(:,:) = 0._r8
                   if ( (lnd_ice == 1) ) then
-                         mss_cnc_aer_lcl(1:11,1) = ice_bc_conc_wgted/11
+                         mss_cnc_aer_lcl(1:10,1) = ice_bc_conc_wgted
                          if (bnd_idx > 1) then
-                            mss_cnc_aer_lcl(1:11,1) = 0._r8
+                            mss_cnc_aer_lcl(1:10,1) = 0._r8
                          endif
                   endif
 
