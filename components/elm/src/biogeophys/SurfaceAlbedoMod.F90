@@ -239,12 +239,12 @@ contains
           fabi_sun_z    =>    surfalb_vars%fabi_sun_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed sunlit leaf diffuse PAR (per unit lai+sai) for each canopy layer
           fabi_sha_z    =>    surfalb_vars%fabi_sha_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed shaded leaf diffuse PAR (per unit lai+sai) for each canopy layer
           albd_ice      =>    surfalb_vars%albd_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (direct)
-          albi_ice      =>    surfalb_vars%albi_ice                 & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
-          )
+          albi_ice      =>    surfalb_vars%albi_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
+         ! )
          ! albd_ice      =>    surfalb_vars%albd_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (direct)
          ! albi_ice      =>    surfalb_vars%albi_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
-         ! bare_ice_flg  =>    surfalb_vars%bare_ice_flg           , & ! Output: 
-
+          bare_ice_flg  =>    surfalb_vars%bare_ice_flg             & ! Output: 
+          )
     ! Cosine solar zenith angle for next time step
 
     do g = bounds%begg,bounds%endg
@@ -717,9 +717,9 @@ contains
                         albd_ice(c,ib) = albice(ib)
                         albi_ice(c,ib) = albice(ib)
                      endif
-                !if (frac_sno(c) < 1) then
-                !        bare_ice_flg(c) = 1
-                !endif
+                if (frac_sno(c) < 1) then
+                   bare_ice_flg(c) = 1._r8
+                endif
               !  write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsod(c,ib)-chd",albsod(c,ib)
               !  write(iulog,*)"CAW SURFALB c",c,"ib",ib,"albsoi(c,ib)-chd",albsoi(c,ib)
              endif
