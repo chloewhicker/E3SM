@@ -2186,7 +2186,8 @@
       valid values:  'copy','spval','nn','nnoni','nnonj'
     </desc>
     <values>
-      <value>nn</value>
+	<value>nn</value>
+        <value stream="ELMERA5">copy</value>
     </values>
   </entry>
 
