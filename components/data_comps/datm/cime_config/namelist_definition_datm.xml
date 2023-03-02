@@ -2441,6 +2441,16 @@
       <value stream="CPLHISTForcing.State1hr">3.0</value>
       <value stream="presaero.cplhist">3.0</value>
       <value stream="topo.cplhist">3.0</value>
+      <value stream="ELMERA5.msdrswrf">2.5</value>
+      <value stream="ELMERA5.msdfswrf">2.5</value>
+      <value stream="ELMERA5.mcpr">2.5</value>
+      <value stream="ELMERA5.mlspr">2.5</value>
+      <value stream="ELMERA5.t2m">2.5</value>
+      <value stream="ELMERA5.sp">2.5</value>
+      <value stream="ELMERA5.d2m">2.5</value>
+      <value stream="ELMERA5.w10">2.5</value>
+      <value stream="ELMERA5.msdwlwrf">2.5</value>
+
     </values>
   </entry>
 

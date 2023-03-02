@@ -1619,13 +1619,14 @@ contains
       call ncd_io( 'snicaradv4_bc_conc', lnd_ice_bc,'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'lat', smap1_lat,'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'lon', smap1_lon,'read', ncid2, posNOTonfile=.true.)
-      !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
-      !if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
-      !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
-      !if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,10)
+      
+     ! if(masterproc)  write(iulog,*) "CAW ice_densityread(2,80,:)",ice_density(2,80,:) 
+     ! if(masterproc)  write(iulog,*) "CAW ice_densityread(2,90,:)",ice_density(2,90,:)
+     ! if(masterproc)  write(iulog,*) "CAW ice_densityread(1,1,:)",ice_density(1,1,:)
+     ! if(masterproc)  write(iulog,*) "CAW ice_densityread(1,2,:)",ice_density(1,2,10)
      ! if(masterproc)  write(iulog,*) "CAW smap1_lon",smap1_lon
      ! if(masterproc)  write(iulog,*) "CAW smap1_lat",smap1_lat
-      !if(masterproc) write(iulog,*) "CAW lnd_ice_bc",lnd_ice_bc(2,80,:)
+     ! if(masterproc) write(iulog,*) "CAW lnd_ice_bc",lnd_ice_bc(2,80,:)
       
       !$acc update device( &
       !$acc ss_alb_snw_drc     ,&
@@ -1809,8 +1810,8 @@ contains
      real(r8) :: thisdist, mindist, thislon
      integer  :: g_idx, c_idx, l_idx,fc                ! gridcell, column, and landunit indices [idx]
      
-     if(masterproc)  write(iulog,*) 'Attempting to re grid bare ice data CAW .....' 
      if (use_snicar_lndice) then
+             if(masterproc)  write(iulog,*) 'Attempting to re grid bare ice data CAW .....'
              do fc = 1,num_nourbanc
                        c_idx = filter_nourbanc(fc)
                        g_idx = col_pp%gridcell(c_idx)
@@ -1835,12 +1836,10 @@ contains
  
                     end do
                   end do
-               !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd smap1_lon(thisx)",smap1_lon(grc_pp%bare_ice_indx(g_idx))
-               !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd smap1_lat(thisy)",smap1_lat(grc_pp%bare_ice_indy(g_idx))
-               !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
-               !   write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
-                ! grc_pp%bare_ice_indx(g_idx) = 1
-                !  grc_pp%bare_ice_indy(g_idx) = 1
+                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd smap1_lon(thisx)",smap1_lon(grc_pp%bare_ice_indx(g_idx))
+                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd smap1_lat(thisy)",smap1_lat(grc_pp%bare_ice_indy(g_idx))
+                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+                  !write(iulog,*) "CAW c",c_idx,"g",g_idx,"regrd grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
              end do
      end if 
 
@@ -1971,7 +1970,6 @@ contains
      real(r8):: asm_prm_aer_lcl(sno_nbr_aer)             ! asymmetry parameter of aerosol species (aer_nbr) [frc]
      real(r8):: ext_cff_mss_aer_lcl(sno_nbr_aer)         ! mass extinction coefficient of aerosol species (aer_nbr) [m2/kg]
      real(r8):: sca_cff_vlm_airbbl_lcl(-nlevsno+1:nlevice)! single-scatter albedo of air bbls (lyr) [frc] ! +CAW
-     !real(r8):: asm_prm_airbbl_lcl(-nlevsno+1:nlevice)        ! +CAW
      real(r8):: abs_cff_mss_ice_lcl(-nlevsno+1:nlevice)   ! +CAW
      real(r8):: vlm_frac_air(-nlevsno+1:nlevice)          ! +CAW
      real(r8):: abs_cff_mss_ice(1:numrad_snw)             ! +CAW
@@ -2498,22 +2496,20 @@ contains
                  grc_ws%bare_ice_dens(g_idx) = ice_density_wgted
                  grc_ws%bare_ice_abr(g_idx)  = bbl_eff_rad_wgted
                  grc_ws%bare_ice_bccnc(g_idx)= ice_bc_conc_wgted
-
-                ! write(iulog,*) "CAW c",c_idx,"g_idx",g_idx
-                ! write(iulog,*) "CAW c",c_idx,"bare_ice_indx",bare_ice_indx_lcl,"tmpy",bare_ice_indy_lcl
-                ! write(iulog,*) "CAW c",c_idx,"grc_pp%bare_ice_indx(g_idx)",grc_pp%bare_ice_indx(g_idx),"grc_pp%bare_ice_indy(g_idx)",grc_pp%bare_ice_indy(g_idx)
-                 !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(tmpx(g_idx))",smap1_lon(bare_ice_indx_lcl)
-                 !write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(tmpy(g_idx))",smap1_lat(bare_ice_indy_lcl)
-                 !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
-                 !write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
-                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
-                 ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
-                 ! write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr,"day",day
-                 ! write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
-                 ! write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
-                 ! write(iulog,*) "CAW c",c_idx,"ice_density(tmpx,tmpy,aindex(1))",ice_density(tmpx(g_idx),tmpy(g_idx),aindex(1)),"ice_density(tmpx,tmpy,aindex(2))",ice_density(tmpx(g_idx),tmpy(g_idx),aindex(2))
-                 ! write(iulog,*) "CAW c",c_idx,"bbl_eff_rad(tmpx,tmpy,aindex(1))",bbl_eff_rad(tmpx(g_idx),tmpy(g_idx),aindex(1)),"bbl_eff_rad(tmpx,tmpy,aindex(2))",bbl_eff_rad(tmpx(g_idx),tmpy(g_idx),aindex(2))
-
+                        if (1==0) then 
+                                write(iulog,*) "CAW c",c_idx,"g_idx",g_idx
+                                write(iulog,*) "CAW c",c_idx,"bare_ice_indx",bare_ice_indx_lcl,"tmpy",bare_ice_indy_lcl
+                                write(iulog,*) "CAW c",c_idx,"grc_pp%bare_ice_indx(g_idx)",grc_pp%bare_ice_indx(g_idx),"grc_pp%bare_ice_indy(g_idx)",grc_pp%bare_ice_indy(g_idx)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(tmpx(g_idx))",smap1_lon(bare_ice_indx_lcl)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(tmpy(g_idx))",smap1_lat(bare_ice_indy_lcl)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
+                                write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr,"day",day
+                                write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
+                                write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
+                        endif
               else 
                  snl_btm   = 0  
                  kfrsnl = 15  ! special value for real data 
@@ -3387,32 +3383,34 @@ contains
                  if (isnan(albedo)) then
                  !if (kfrsnl==1) then
                      write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"albedo w/sno=", albedo
-                    ! write (iulog,*) "CAW c",c_idx,"landtype= ", sfctype
-                    ! write (iulog,*) "CAW c",c_idx,"coszen= ", coszen(c_idx), " flg_slr= ", flg_slr_in
-                    ! do i=snl_top,snl_btm,1
-                    !  write(iulog,*) "CAW c",c_idx,"i",i,"snw_rds",snw_rds_lcl(i)
-                    !  write(iulog,*) "CAW c",c_idx,"i",i,"soot1", mss_cnc_aer_lcl(i,1)
-                    !  write(iulog,*) "CAW c",c_idx,"i",i,"soot2", mss_cnc_aer_lcl(i,2)
-                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust1", mss_cnc_aer_lcl(i,3)
-                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust2", mss_cnc_aer_lcl(i,4)
-                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust3", mss_cnc_aer_lcl(i,5)
-                     ! write(iulog,*) "CAW c",c_idx,"i",i,"dust4", mss_cnc_aer_lcl(i,6)
-                     ! write (iulog,*) "CAW c",c_idx,"i",i,"L_snw", L_snw(i)
+                     write (iulog,*) "CAW c",c_idx,"landtype= ", sfctype
+                     write (iulog,*) "CAW c",c_idx,"coszen= ", coszen(c_idx), " flg_slr= ", flg_slr_in
+                     write (iulog,*) "CAW c",c_idx,"calday_curr",calday_curr 
+                     
+                     do i=snl_top,snl_btm,1
+                         write(iulog,*) "CAW c",c_idx,"i",i,"snw_rds",snw_rds_lcl(i)
+                         write(iulog,*) "CAW c",c_idx,"i",i,"soot1", mss_cnc_aer_lcl(i,1)
+                         write(iulog,*) "CAW c",c_idx,"i",i,"soot2", mss_cnc_aer_lcl(i,2)
+                         write(iulog,*) "CAW c",c_idx,"i",i,"dust1", mss_cnc_aer_lcl(i,3)
+                         write(iulog,*) "CAW c",c_idx,"i",i,"dust2", mss_cnc_aer_lcl(i,4)
+                         write(iulog,*) "CAW c",c_idx,"i",i,"dust3", mss_cnc_aer_lcl(i,5)
+                         write(iulog,*) "CAW c",c_idx,"i",i,"dust4", mss_cnc_aer_lcl(i,6)
+                         write (iulog,*) "CAW c",c_idx,"i",i,"L_snw", L_snw(i)
 
 
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_ice",h2osno_ice_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_liq",h2osno_liq_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_ice",h2osoi_ice_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_liq",h2osoi_liq_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"sca_cff_bbl", sca_cff_vlm_airbbl_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"asm_prm_sn",asm_prm_snw_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"abs_cff_m_i", abs_cff_mss_ice_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ext_cff_m_s",ext_cff_mss_snw_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ss_alb_s",ss_alb_snw_lcl(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw",L_snw(i)
-                     !  write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau",tau_snw(i)
-                     ! enddo
-                      !call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_ice",h2osno_ice_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSNO_liq",h2osno_liq_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_ice",h2osoi_ice_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_liq",h2osoi_liq_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"sca_cff_bbl", sca_cff_vlm_airbbl_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"asm_prm_sn",asm_prm_snw_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"abs_cff_m_i", abs_cff_mss_ice_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ext_cff_m_s",ext_cff_mss_snw_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ss_alb_s",ss_alb_snw_lcl(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw",L_snw(i)
+                        write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau",tau_snw(i)
+                     enddo
+                     call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
                  endif 
 
                   ! Absorbed flux in each layer
