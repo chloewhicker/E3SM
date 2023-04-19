@@ -1233,9 +1233,9 @@ contains
        forc_q = atm2lnd_vars%forc_q_not_downscaled_grc(g)
        forc_pbot = atm2lnd_vars%forc_pbot_not_downscaled_grc(g)
        
-       atm2lnd_vars%forc_hgt_u_grc(g) = 10.0_R8 !CAW    !observational height of wind [m] ! 10.0_R8 !CAW
-       atm2lnd_vars%forc_hgt_t_grc(g) = 2.0_R8  !CAW    !observational height of temperature [m]
-       atm2lnd_vars%forc_hgt_q_grc(g) = 2.0_R8  !CAW    !observational height of humidity [m]
+       atm2lnd_vars%forc_hgt_u_grc(g) = 10.0_R8 !CAW !atm2lnd_vars%forc_hgt_grc(g)    !observational height of wind [m] ! 10.0_R8 !CAW
+       atm2lnd_vars%forc_hgt_t_grc(g) = 2.0_R8  !CAW !atm2lnd_vars%forc_hgt_grc(g)   !observational height of temperature [m]
+       atm2lnd_vars%forc_hgt_q_grc(g) = 2.0_R8  !CAW !atm2lnd_vars%forc_hgt_grc(g)    !observational height of humidity [m]
        atm2lnd_vars%forc_vp_grc(g)    = forc_q * forc_pbot  / (0.622_r8 + 0.378_r8 * forc_q)
        atm2lnd_vars%forc_rho_not_downscaled_grc(g) = &
             (forc_pbot - 0.378_r8 * atm2lnd_vars%forc_vp_grc(g)) / (rair * forc_t)

@@ -343,8 +343,8 @@ contains
            ! amschnei@uci.edu: Initializing "deep firn" for glacier columns
            if (lun_pp%itype(l)==istice .or. lun_pp%itype(l)==istice_mec) then
               ! land ice (including multiple elevation classes, i.e. glacier_mec)
-              ! h2osno_col(c) = 0.5_r8 * h2osno_max   ! start with half full snow column, representing deep firn
-              h2osno_col(c) = 0.05_r8 * h2osno_max    ! start with small snow layer, CAW temp for ice sims
+               h2osno_col(c) = 0.5_r8 * h2osno_max   ! start with half full snow column, representing deep firn
+              ! h2osno_col(c) = 0.05_r8 * h2osno_max    ! start with small snow layer, CAW temp for ice sims
               snow_depth_col(c)  = h2osno_col(c) / bdfirn
            else if (lun_pp%itype(l)==istsoil .and. grc_pp%latdeg(g) >= 44._r8) then
               ! Northern hemisphere seasonal snow
