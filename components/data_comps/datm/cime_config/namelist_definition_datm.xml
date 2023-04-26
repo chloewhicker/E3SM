@@ -37,8 +37,6 @@
     CLMCRUNCEPv7 	= Run with the CLM CRU NCEP V7 forcing valid from 1900 to 2010 (force CLM)
     CLMGSWP3v1		= Run with the CLM GSWP3 V1 forcing (force CLM)
     ELMERA5             = Run with the ELM fifth generation ECMWF reanalysis from 1979 to present
-    ERA56HR             = Run with the ELM fifth generation ECMWF reanalysis from 1979 to present
-    ELMGSWP3w5e5        = Run with the ELM GSWP3-w5e5 forcing (force ELM)
     CLMMOSARTTEST   	= Run with the CLM NLDAS data (force CLM) for testing MOSART
     CLMNLDAS2		= Run with the CLM NLDAS2 regional forcing valid from 1980 to 2018 (force CLM)
     CLM1PT		= Run with supplied single point data (force CLM)
@@ -235,7 +233,7 @@
   <!-- ========================================================================================  -->
 
   <entry id="streamslist">
-    <type>char(100)</type>
+    <type>char(200)</type>
     <category>streams</category>
     <group>streams_file</group>
     <desc>List of streams used for the given datm_mode</desc>
