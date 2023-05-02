@@ -233,7 +233,7 @@
   <!-- ========================================================================================  -->
 
   <entry id="streamslist">
-    <type>char(200)</type>
+    <type>char(100)</type>
     <category>streams</category>
     <group>streams_file</group>
     <desc>List of streams used for the given datm_mode</desc>
