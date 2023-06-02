@@ -1972,10 +1972,16 @@ contains
      real(r8):: abs_cff_mss_ice_lcl(-nlevsno+1:nlevice)   ! +CAW
      real(r8):: vlm_frac_air(-nlevsno+1:nlevice)          ! +CAW
      real(r8):: abs_cff_mss_ice(1:numrad_snw)             ! +CAW
+     real(r8):: refindx_re(1:numrad_snw)                 ! +CAW
+     real(r8):: refindx_im(1:numrad_snw)                 ! +CAW
+     real(r8):: dif_a(1:numrad_snw)                      ! +CAW
+     real(r8):: dif_b(1:numrad_snw)                      ! +CAW
      real(r8):: rhos                                     ! snow / ice density [kg m-3] +CAW
      real(r8):: h2osoi_ice_lcl(-nlevsno+1:nlevice)       ! liquid water mass [kg/m2] +CAW
      real(r8):: h2osoi_liq_lcl(-nlevsno+1:nlevice)       ! liquid water mass [kg/m2]  +CAW 
-
+     real(r8):: temp2                                     
+     real(r8):: temp1
+     real(r8):: nreal     
 
 #ifdef MODAL_AER
      !mgf++
@@ -2360,11 +2366,36 @@ contains
        endif
 
       ! absorb coe mass ice +CAW
-      abs_cff_mss_ice(1:5)     & ! gaussian angles (radians)
-         = (/ 0.0001_r8,  0.0046_r8, &
-              0.0292_r8,  0.7214_r8, &
-              234.9374_r8/)
-      
+      !abs_cff_mss_ice(1:5)     & ! gaussian angles (radians)
+      !  = (/ 0.0001_r8,  0.0046_r8, &
+      !       0.0292_r8,  0.7214_r8, &
+      !       234.9374_r8/)
+      abs_cff_mss_ice(1:5)     & 
+        = (/ 0.000099869643372_r8,  0.003524745414315_r8, &
+             0.028568409563062_r8,  0.324498658024029_r8, &
+             32.963007797599360_r8/)
+
+     refindx_re(1:5)     & 
+        = (/ 1.313741604238609_r8, 1.304720478154840_r8, &
+             1.300364073362140_r8, 1.296615676104419_r8, &
+             1.291718353438733_r8/)
+
+     refindx_im(1:5)     &
+        = (/ 0.000000004418686_r8,  0.000000229029691_r8, &
+             0.000002249348169_r8,  0.000033031102088_r8, &
+             0.007445625180286_r8/)
+
+     dif_a(1:5)     &
+        = (/ 0.0633402270380342_r8,  0.06189314981880321_r8, &
+             0.0611905910736522_r8,  0.0605842642044964_r8, &
+             0.0617648953124473_r8/)
+
+     dif_b(1:5)     &
+        = (/  0.432870505704913_r8,  0.424519192762872_r8, &
+              0.420382469844439_r8,  0.416853617451133_r8, &
+              0.411700917011931_r8/)
+
+
       !get weights for interpolation
       call get_curr_date( yr, mon, day, tod )
       calday_curr = get_curr_calday()
@@ -2470,7 +2501,10 @@ contains
                  !write (iulog,*) "CAW c",c_idx,"lun_pp%itype(l_idx)",lun_pp%itype(l_idx)
                  snl_btm   = nlevice  ! 15 ice layers
                  kfrsnl    = 1        ! layer 1 is always going to be the first ice layer
-                 mu0n      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
+                 !tmp1      = (refindx_re*refindx_re)-(refindx_im*refindx_im)+sin(acos(coszen(c_idx)))
+                 !tmp2      = (refindx_re*refindx_re)-(refindx_im*refindx_im)-sin(acos(coszen(c_idx)))
+                 !nreal     = (sqrt(2)/2)* sqrt(tmp1 + sqrt( (tmp2*tmp2) + (4*refindx_re*refindx_re*refindx_im*refindx_im) ) )
+                 !mu0n      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
                  lnd_ice   = 1        ! TRUE
 
                  bare_ice_indx_lcl = grc_pp%bare_ice_indx(g_idx)
@@ -2556,7 +2590,7 @@ contains
                 h2osoi_ice_lcl(:) = h2osoi_ice(c_idx,:) ! +CAW
                 
                 if ( (use_snicar_lndice).and. (lnd_ice ==1) ) then 
-                   snw_rds_lcl(1:snl_btm)    = nint(bbl_eff_rad_wgted)! CAW - temp set the air bub rad to constant
+                   snw_rds_lcl(1:snl_btm)    = nint(bbl_eff_rad_wgted)     ! +CAW 
                    h2osno_liq_lcl(1:snl_btm) = h2osoi_liq(c_idx,1:snl_btm) ! +CAW
                    h2osno_ice_lcl(1:snl_btm) = h2osoi_ice(c_idx,1:snl_btm) ! +CAW
                 endif
@@ -2656,6 +2690,13 @@ contains
                      flx_wgt(3) = 0.18099494230665_r8
                      flx_wgt(4) = 0.12094898498813_r8
                      flx_wgt(5) = 0.20453448749347_r8
+                     if ( (use_snicar_lndice).and. (lnd_ice ==1) ) then !+CAW
+                        flx_wgt(1) = 1._r8
+                        flx_wgt(2) = 0.502936511226529_r8
+                        flx_wgt(3) = 0.180787216133052_r8
+                        flx_wgt(4) = 0.116700734417544_r8
+                        flx_wgt(5) = 0.199547150388836_r8
+                     endif                                              !+CAW
                   else                 
                      slr_zen = nint(acos(coszen(c_idx)) * 180._r8 / pi)
                      if (slr_zen>89) then
@@ -3153,15 +3194,42 @@ contains
                                 ! amplitudes for two polarizations: 1=perpendicular
                                 ! and 2=parallel to he plane containing incident,
                                 ! reflected and refracted rays.
+                                temp1      = (refindx_re(bnd_idx)*refindx_re(bnd_idx))-(refindx_im(bnd_idx)*refindx_im(bnd_idx))+(sin(acos(coszen(c_idx)))*sin(acos(coszen(c_idx))))
+                                temp2      = (refindx_re(bnd_idx)*refindx_re(bnd_idx))-(refindx_im(bnd_idx)*refindx_im(bnd_idx))-(sin(acos(coszen(c_idx)))*sin(acos(coszen(c_idx))))
+                                nreal      = (sqrt(2._r8)/2._r8)* sqrt(temp1 + sqrt( (temp2*temp2) + (4*refindx_re(bnd_idx)*refindx_re(bnd_idx)*refindx_im(bnd_idx)*refindx_im(bnd_idx)) ) )
+                                !mu0n      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
+                                !mu0n      = sqrt(c1-((c1-(coszen(c_idx))**2)/nreal))
+                                mu0n      = cos(asin(sin(acos(coszen(c_idx)))/nreal))
                                 mu0= mu_not
-                                R1 = (mu0 - refindx*mu0n) / &
-                                     (mu0 + refindx*mu0n)
-                                R2 = (refindx*mu0 - mu0n) / &
-                                     (refindx*mu0 + mu0n)
+                                
+                                 if (isnan(nreal) .or. isnan(mu0n)) then
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"NAN"
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n=", mu0n
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"nreal=", nreal
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"temp2=", temp2
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"temp1=", temp1
+                                      call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+                                 endif
+                                
+                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n                                
+                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"nreal", nreal
+                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"dif_a(bnd_idx)", dif_a(bnd_idx)
+                                !R1 = (mu0 - refindx*mu0n) / &
+                                !     (mu0 + refindx*mu0n)
+                                !R2 = (refindx*mu0 - mu0n) / &
+                                !     (refindx*mu0 + mu0n)
+                                !T1 = c2*mu0 / &
+                                !     (mu0 + refindx*mu0n)
+                                !T2 = c2*mu0 / &
+                                !     (refindx*mu0 + mu0n)
+                                R1 = (mu0 - nreal*mu0n) / &
+                                     (mu0 + nreal*mu0n)
+                                R2 = (nreal*mu0 - mu0n) / &
+                                     (nreal*mu0 + mu0n)
                                 T1 = c2*mu0 / &
-                                     (mu0 + refindx*mu0n)
+                                     (mu0 + nreal*mu0n)
                                 T2 = c2*mu0 / &
-                                     (refindx*mu0 + mu0n)
+                                     (nreal*mu0 + mu0n)
                             ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0", mu0
                             ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu_not", mu_not
                             ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n
@@ -3173,7 +3241,8 @@ contains
 
                               ! unpolarized light for direct beam
                               Rf_dir_a = cp5 * (R1*R1 + R2*R2)
-                              Tf_dir_a = cp5 * (T1*T1 + T2*T2)*refindx*mu0n/mu0
+                              !Tf_dir_a = cp5 * (T1*T1 + T2*T2)*refindx*mu0n/mu0
+                              Tf_dir_a = cp5 * (T1*T1 + T2*T2)*nreal*mu0n/mu0
                               
                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"Rf_dir_a",Rf_dir_a
                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"Tf_dir_a",Tf_dir_a
@@ -3185,10 +3254,12 @@ contains
                               ! gaussian points (~256) is required for convergence:
                               
                               ! above
-                              Rf_dif_a = cp063
+                              !Rf_dif_a = cp063
+                              Rf_dif_a = dif_a(bnd_idx)
                               Tf_dif_a = c1 - Rf_dif_a
                               ! below
-                              Rf_dif_b = cp455
+                              !Rf_dif_b = cp455
+                              Rf_dif_b = dif_b(bnd_idx)
                               Tf_dif_b = c1 - Rf_dif_b
 
 
@@ -4077,22 +4148,49 @@ contains
                         ! homogeneous layer
                         rdif_b(i) = rdif_a(i)
                         tdif_b(i) = tdif_a(i)
-
-                        ! +CAW Fresnel Code -- start 
+                        
+                        ! +CAW Fresnel Code -- start round 2 
                         if( i == kfrsnl ) then
                                 ! compute fresnel reflection and transmission
                                 ! amplitudes for two polarizations: 1=perpendicular
                                 ! and 2=parallel to he plane containing incident,
                                 ! reflected and refracted rays.
+                                temp1      = (refindx_re(bnd_idx)*refindx_re(bnd_idx))-(refindx_im(bnd_idx)*refindx_im(bnd_idx))+(sin(acos(coszen(c_idx)))*sin(acos(coszen(c_idx))))
+                                temp2      = (refindx_re(bnd_idx)*refindx_re(bnd_idx))-(refindx_im(bnd_idx)*refindx_im(bnd_idx))-(sin(acos(coszen(c_idx)))*sin(acos(coszen(c_idx))))
+                                nreal      = (sqrt(2._r8)/2._r8)* sqrt(temp1 + sqrt( (temp2*temp2) + (4*refindx_re(bnd_idx)*refindx_re(bnd_idx)*refindx_im(bnd_idx)*refindx_im(bnd_idx)) ) )
+                                !mu0n      = sqrt(c1-((c1-(coszen(c_idx))**2)/(refindx*refindx))) !SZA under the refractive boundary 
+                                !mu0n      = sqrt(c1-((c1-(coszen(c_idx))**2)/nreal))
+                                mu0n      = cos(asin(sin(acos(coszen(c_idx)))/nreal))
                                 mu0= mu_not
-                                R1 = (mu0 - refindx*mu0n) / &
-                                     (mu0 + refindx*mu0n)
-                                R2 = (refindx*mu0 - mu0n) / &
-                                     (refindx*mu0 + mu0n)
+                                 if (isnan(nreal) .or. isnan(mu0n)) then
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"NAN"
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n=", mu0n
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"nreal=", nreal
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"temp2=", temp2
+                                       write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"temp1=", temp1
+                                      call endrun(decomp_index=c_idx, elmlevel=namec, msg=errmsg(__FILE__, __LINE__))
+                                 endif
+
+
+                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n                                
+                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"nreal", nreal
+                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"dif_a(bnd_idx)", dif_a(bnd_idx)
+                                !R1 = (mu0 - refindx*mu0n) / &
+                                !     (mu0 + refindx*mu0n)
+                                !R2 = (refindx*mu0 - mu0n) / &
+                                !     (refindx*mu0 + mu0n)
+                                !T1 = c2*mu0 / &
+                                !     (mu0 + refindx*mu0n)
+                                !T2 = c2*mu0 / &
+                                !     (refindx*mu0 + mu0n)
+                                R1 = (mu0 - nreal*mu0n) / &
+                                     (mu0 + nreal*mu0n)
+                                R2 = (nreal*mu0 - mu0n) / &
+                                     (nreal*mu0 + mu0n)
                                 T1 = c2*mu0 / &
-                                     (mu0 + refindx*mu0n)
+                                     (mu0 + nreal*mu0n)
                                 T2 = c2*mu0 / &
-                                     (refindx*mu0 + mu0n)
+                                     (nreal*mu0 + mu0n)
                             ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0", mu0
                             ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu_not", mu_not
                             ! write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"mu0n", mu0n
@@ -4104,7 +4202,8 @@ contains
 
                               ! unpolarized light for direct beam
                               Rf_dir_a = cp5 * (R1*R1 + R2*R2)
-                              Tf_dir_a = cp5 * (T1*T1 + T2*T2)*refindx*mu0n/mu0
+                              !Tf_dir_a = cp5 * (T1*T1 + T2*T2)*refindx*mu0n/mu0
+                              Tf_dir_a = cp5 * (T1*T1 + T2*T2)*nreal*mu0n/mu0
                               
                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"Rf_dir_a",Rf_dir_a
                                !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"Tf_dir_a",Tf_dir_a
@@ -4116,10 +4215,12 @@ contains
                               ! gaussian points (~256) is required for convergence:
                               
                               ! above
-                              Rf_dif_a = cp063
+                              !Rf_dif_a = cp063
+                              Rf_dif_a = dif_a(bnd_idx)
                               Tf_dif_a = c1 - Rf_dif_a
                               ! below
-                              Rf_dif_b = cp455
+                              !Rf_dif_b = cp455
+                              Rf_dif_b = dif_b(bnd_idx)
                               Tf_dif_b = c1 - Rf_dif_b
 
 
@@ -4153,6 +4254,7 @@ contains
                         ! +CAW Fresnel code - end
 
 
+                       
                       endif ! trntdr(k) > trmin
 
                       ! Calculate the solar beam transmission, total transmission, and
