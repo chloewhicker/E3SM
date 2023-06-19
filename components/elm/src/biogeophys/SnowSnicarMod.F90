@@ -2479,7 +2479,7 @@ contains
                  ice_bc_conc_wgted = lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
                                   +lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2 
                  ice_bc_conc_wgted=ice_bc_conc_wgted*1.e-09_r8 ! convert from ng/g -> kg/kg 
-               
+
                  ice_density_wgted = ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 & 
                                 +ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
                  bbl_eff_rad_wgted = bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
