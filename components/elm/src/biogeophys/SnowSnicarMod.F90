@@ -2699,10 +2699,10 @@ contains
                         flx_wgt(4) = 0.116700734417544_r8
                         flx_wgt(5) = 0.199547150388836_r8
                         if (1==1) then ! new weighting scheme to fix NIR 
-                            flx_wgt(2)  = 0.502936511226529_r8 + 0.075_r8
-                            flx_wgt(3)  = 0.180787216133052_r8 + 0.075_r8
-                            flx_wgt(4)  = 0.116700734417544_r8 - 0.075_r8
-                            flx_wgt(5)  = 0.199547150388836_r8 - 0.075_r8
+                            flx_wgt(2)  = 0.502936511226529_r8 + 0.05_r8
+                            flx_wgt(3)  = 0.180787216133052_r8 + 0.05_r8
+                            flx_wgt(4)  = 0.116700734417544_r8 - 0.05_r8
+                            flx_wgt(5)  = 0.199547150388836_r8 - 0.05_r8
                         endif
                      endif                                              !+CAW
                   else                 
@@ -2732,10 +2732,10 @@ contains
                         flx_wgt(4) = 0.093952188565569_r8
                         flx_wgt(5) = 0.086205637586152_r8
                         if (1==1) then ! new weighting scheme to fix NIR
-                            flx_wgt(2)  = 0.633177019092330_r8 + 0.075_r8
-                            flx_wgt(3)  = 0.186664819863994_r8 + 0.075_r8
-                            flx_wgt(4)  = 0.093952188565569_r8 - 0.075_r8
-                            flx_wgt(5)  = 0.086205637586152_r8 - 0.075_r8
+                            flx_wgt(2)  = 0.633177019092330_r8 + 0.05_r8
+                            flx_wgt(3)  = 0.186664819863994_r8 + 0.05_r8
+                            flx_wgt(4)  = 0.093952188565569_r8 - 0.05_r8
+                            flx_wgt(5)  = 0.086205637586152_r8 - 0.05_r8
                         endif
                      endif
                   else
@@ -3782,6 +3782,19 @@ contains
                    flx_wgt(3) = 0.18099494230665_r8
                    flx_wgt(4) = 0.12094898498813_r8
                    flx_wgt(5) = 0.20453448749347_r8
+                   if ( (use_snicar_lndice).and. (lnd_ice ==1) ) then !+CAW
+                        flx_wgt(1) = 1._r8
+                        flx_wgt(2) = 0.502936511226529_r8
+                        flx_wgt(3) = 0.180787216133052_r8
+                        flx_wgt(4) = 0.116700734417544_r8
+                        flx_wgt(5) = 0.199547150388836_r8
+                        if (1==1) then ! new weighting scheme to fix NIR 
+                            flx_wgt(2)  = 0.502936511226529_r8 + 0.05_r8
+                            flx_wgt(3)  = 0.180787216133052_r8 + 0.05_r8
+                            flx_wgt(4)  = 0.116700734417544_r8 - 0.05_r8
+                            flx_wgt(5)  = 0.199547150388836_r8 - 0.05_r8
+                        endif
+                   endif                                              !+CAW
                    ! Diffuse:
                 elseif (flg_slr_in == 2) then
                    flx_wgt(1) = 1._r8
@@ -3789,6 +3802,19 @@ contains
                    flx_wgt(3) = 0.20156903770812_r8
                    flx_wgt(4) = 0.10917889346386_r8
                    flx_wgt(5) = 0.10343699264369_r8
+                   if ( (use_snicar_lndice).and. (lnd_ice ==1) ) then !+CAW
+                        flx_wgt(1) = 1._r8
+                        flx_wgt(2) = 0.633177019092330_r8
+                        flx_wgt(3) = 0.186664819863994_r8
+                        flx_wgt(4) = 0.093952188565569_r8
+                        flx_wgt(5) = 0.086205637586152_r8
+                        if (1==1) then ! new weighting scheme to fix NIR
+                            flx_wgt(2)  = 0.633177019092330_r8 + 0.05_r8
+                            flx_wgt(3)  = 0.186664819863994_r8 + 0.05_r8
+                            flx_wgt(4)  = 0.093952188565569_r8 - 0.05_r8
+                            flx_wgt(5)  = 0.086205637586152_r8 - 0.05_r8
+                        endif
+                   endif
                 endif
              endif ! end if numrad_snw
 
