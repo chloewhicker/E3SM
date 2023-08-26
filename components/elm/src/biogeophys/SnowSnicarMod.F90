@@ -2399,19 +2399,29 @@ contains
 
 
       !get weights for interpolation
-      call get_curr_date( yr, mon, day, tod )
-      calday_curr = get_curr_calday()
-      aindex(1) = mon+1
-      if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
-              wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
-              aindex(2) = aindex(1)-1
-      else
-              wt1 = 1.0_r8 - (calday_curr-(caldaym(mon+1)+caldaym(mon))/2._r8)/   &
-                      (caldaym(mon+1)-caldaym(mon))
-              aindex(2) = aindex(1)+1
-      end if
-      wt2 = 1._r8 - wt1
-   
+     ! call get_curr_date( yr, mon, day, tod )
+     ! calday_curr = get_curr_calday()
+     ! aindex(1) = mon+1
+
+
+     ! if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
+     !         wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
+     !         aindex(2) = aindex(1)-1
+     !         write (iulog,*) "CAW if 1 = TRUE"
+     ! else
+     !         wt1 = 1.0_r8 - (calday_curr-(caldaym(mon+1)+caldaym(mon))/2._r8)/   &
+     !                 (caldaym(mon+1)-caldaym(mon))
+     !         aindex(2) = aindex(1)+1
+     !         write (iulog,*) "CAW if 2 = TRUE"
+     ! end if
+     ! wt2 = 1._r8 - wt1
+
+     ! write (iulog,*) "CAW (caldaym(mon))",(caldaym(mon))
+     ! write (iulog,*) "CAW (caldaym(mon+1))",(caldaym(mon+1))
+     ! write (iulog,*) "CAW calday_curr",calday_curr
+     ! write (iulog,*) "CAW aindex(2)",aindex(2)
+     ! write (iulog,*) "CAW aindex(1)",aindex(1)
+
       if (use_snicar_lndice) then 
               !get weights for interpolation
               call get_curr_date( yr, mon, day, tod )
@@ -2427,6 +2437,13 @@ contains
                   aindex(2) = aindex(1)+1
               end if
               wt2 = 1._r8 - wt1
+
+             ! write (iulog,*) "CAW (caldaym(mon))",(caldaym(mon))
+             ! write (iulog,*) "CAW (caldaym(mon+1))",(caldaym(mon+1))
+             ! write (iulog,*) "CAW calday_curr",calday_curr
+             ! write (iulog,*) "CAW aindex(2)",aindex(2)
+             ! write (iulog,*) "CAW aindex(1)",aindex(1)
+
       end if 
 
       
