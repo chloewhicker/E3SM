@@ -263,6 +263,11 @@ module SnowSnicarMod
   real(r8) :: ss_alb_dst4     (numrad_snw);
   real(r8) :: asm_prm_dst4    (numrad_snw);
   real(r8) :: ext_cff_mss_dst4(numrad_snw);
+  
+  ! Glacier Algae
+  real(r8) :: ss_alb_ga     (numrad_snw);
+  real(r8) :: asm_prm_ga    (numrad_snw);
+  real(r8) :: ext_cff_mss_ga(numrad_snw);
   !$acc declare create(ss_alb_dst4     )
   !$acc declare create(asm_prm_dst4    )
   !$acc declare create(ext_cff_mss_dst4)
@@ -1715,6 +1720,11 @@ contains
       call ncd_io( 'asm_prm_dust04', asm_prm_dst4,         'read', ncid, posNOTonfile=.true.)
       call ncd_io( 'ext_cff_mss_dust04', ext_cff_mss_dst4, 'read', ncid, posNOTonfile=.true.)
       !
+      ! Glacier Algae SAS - Mie parameters ; length 40um, rad 4um
+      call ncd_io( 'ss_alb_glacalg', ss_alb_ga,           'read', ncid, posNOTonfile=.true.)
+      call ncd_io( 'asm_prm_glacalg', asm_prm_ga,         'read', ncid, posNOTonfile=.true.)
+      call ncd_io( 'ext_cff_mss_glacalg', ext_cff_mss_ga, 'read', ncid, posNOTonfile=.true.)
+      !
       !
      !$acc update device( &
      !$acc ss_alb_oc1       ,&
@@ -1788,6 +1798,8 @@ contains
               ss_alb_dst3(1), ss_alb_dst3(2), ss_alb_dst3(3), ss_alb_dst3(4), ss_alb_dst3(5)
          write (iulog,*) 'SNICAR: Mie single scatter albedos for dust species 4: ', &
               ss_alb_dst4(1), ss_alb_dst4(2), ss_alb_dst4(3), ss_alb_dst4(4), ss_alb_dst4(5)
+         write (iulog,*) 'SNICAR: Mie single scatter albedos for glacier algae: ', &
+              ss_alb_ga(1), ss_alb_ga(2), ss_alb_ga(3), ss_alb_ga(4), ss_alb_ga(5)
          write(iulog,*)
       end if
      
@@ -1950,14 +1962,15 @@ contains
      ! variables for snow radiative transfer calculations
 
 
-     integer, parameter :: nlevice = 15                 ! +CAW  
+     integer, parameter :: nlevice = 15                 ! +CAW 
+     integer, parameter :: ice_nbr_aer = sno_nbr_aer+1                 ! +CAW   
 
      ! Local variables representing single-column values of arrays:
      integer :: snl_lcl                                  ! negative number of snow layers [nbr]
      integer :: snw_rds_lcl(-nlevsno+1:nlevice)          ! snow effective radius [m^-6]
      real(r8):: flx_slrd_lcl(1:numrad_snw)               ! direct beam incident irradiance [W/m2] (set to 1)
      real(r8):: flx_slri_lcl(1:numrad_snw)               ! diffuse incident irradiance [W/m2] (set to 1)
-     real(r8):: mss_cnc_aer_lcl(-nlevsno+1:nlevice,1:sno_nbr_aer) ! aerosol mass concentration (lyr,aer_nbr) [kg/kg]
+     real(r8):: mss_cnc_aer_lcl(-nlevsno+1:nlevice,1:ice_nbr_aer) ! aerosol mass concentration (lyr,aer_nbr) [kg/kg]
      real(r8):: h2osno_lcl                               ! total column snow mass [kg/m2]
      real(r8):: h2osno_liq_lcl(-nlevsno+1:nlevice)       ! liquid water mass [kg/m2]
      real(r8):: h2osno_ice_lcl(-nlevsno+1:nlevice)       ! ice mass [kg/m2]
@@ -1965,9 +1978,9 @@ contains
      real(r8):: ss_alb_snw_lcl(-nlevsno+1:nlevice)       ! single-scatter albedo of ice grains (lyr) [frc]
      real(r8):: asm_prm_snw_lcl(-nlevsno+1:nlevice)      ! asymmetry parameter of ice grains (lyr) [frc]
      real(r8):: ext_cff_mss_snw_lcl(-nlevsno+1:nlevice)  ! mass extinction coefficient of ice grains (lyr) [m2/kg]
-     real(r8):: ss_alb_aer_lcl(sno_nbr_aer)              ! single-scatter albedo of aerosol species (aer_nbr) [frc]
-     real(r8):: asm_prm_aer_lcl(sno_nbr_aer)             ! asymmetry parameter of aerosol species (aer_nbr) [frc]
-     real(r8):: ext_cff_mss_aer_lcl(sno_nbr_aer)         ! mass extinction coefficient of aerosol species (aer_nbr) [m2/kg]
+     real(r8):: ss_alb_aer_lcl(ice_nbr_aer)              ! single-scatter albedo of aerosol species (aer_nbr) [frc]
+     real(r8):: asm_prm_aer_lcl(ice_nbr_aer)             ! asymmetry parameter of aerosol species (aer_nbr) [frc]
+     real(r8):: ext_cff_mss_aer_lcl(ice_nbr_aer)         ! mass extinction coefficient of aerosol species (aer_nbr) [m2/kg]
      real(r8):: sca_cff_vlm_airbbl_lcl(-nlevsno+1:nlevice)! single-scatter albedo of air bbls (lyr) [frc] ! +CAW
      real(r8):: abs_cff_mss_ice_lcl(-nlevsno+1:nlevice)   ! +CAW
      real(r8):: vlm_frac_air(-nlevsno+1:nlevice)          ! +CAW
@@ -2010,8 +2023,8 @@ contains
      real(r8):: flx_abs_lcl(-nlevsno+1:nlevice+1,numrad_snw)! absorbed flux per unit incident flux at top of snowpack (lyr,bnd) [frc]
      real(r8):: L_snw(-nlevsno+1:nlevice)                ! h2o mass (liquid+solid) in snow layer (lyr) [kg/m2]
      real(r8):: tau_snw(-nlevsno+1:nlevice)              ! snow optical depth (lyr) [unitless]
-     real(r8):: L_aer(-nlevsno+1:nlevice,sno_nbr_aer)    ! aerosol mass in snow layer (lyr,nbr_aer) [kg/m2]
-     real(r8):: tau_aer(-nlevsno+1:nlevice,sno_nbr_aer)  ! aerosol optical depth (lyr,nbr_aer) [unitless]
+     real(r8):: L_aer(-nlevsno+1:nlevice,ice_nbr_aer)    ! aerosol mass in snow layer (lyr,nbr_aer) [kg/m2]
+     real(r8):: tau_aer(-nlevsno+1:nlevice,ice_nbr_aer)  ! aerosol optical depth (lyr,nbr_aer) [unitless]
      real(r8):: tau_sum                                  ! cumulative (snow+aerosol) optical depth [unitless]
      real(r8):: tau_elm(-nlevsno+1:nlevice)              ! column optical depth from layer bottom to snowpack top (lyr) [unitless]
      real(r8):: omega_sum                                ! temporary summation of single-scatter albedo of all aerosols [frc]
@@ -2584,12 +2597,7 @@ contains
            !mgf--
 #endif
 
-             ! Set local aerosol array
-             !do j=1,sno_nbr_aer
-             !   mss_cnc_aer_lcl(:,j) = 0._r8!mss_cnc_aer_in(c_idx,:,j)
-             !enddo
-
-
+            
              ! Set spectral underlying surface albedos to their corresponding VIS or NIR albedos
              albsfc_lcl(1)                       = albsfc(c_idx,1)
              albsfc_lcl(nir_bnd_bgn:nir_bnd_end) = albsfc(c_idx,2)
@@ -2660,7 +2668,9 @@ contains
 
              mss_cnc_aer_lcl(:,:) = 0._r8
                   if ( (lnd_ice == 1) ) then
-                         mss_cnc_aer_lcl(1:10,1) = ice_bc_conc_wgted
+                         mss_cnc_aer_lcl(1:10,2) = ice_bc_conc_wgted ! hydrophoibic non-coated BC 
+                         mss_cnc_aer_lcl(1:10,7) = ice_bc_conc_wgted ! dust species 3 
+                         mss_cnc_aer_lcl(1:3,9)  = ice_bc_conc_wgted
                          if (bnd_idx > 1) then
                             mss_cnc_aer_lcl(1:10,1) = 0._r8
                          endif
@@ -2797,6 +2807,11 @@ contains
                    asm_prm_aer_lcl(8)       = asm_prm_dst4(bnd_idx)
                    ext_cff_mss_aer_lcl(8)   = ext_cff_mss_dst4(bnd_idx)
 
+                   ! GLACIER ALGAE optical properties
+                   ss_alb_aer_lcl(9)        = ss_alb_ga(bnd_idx)
+                   asm_prm_aer_lcl(9)       = asm_prm_ga(bnd_idx)
+                   ext_cff_mss_aer_lcl(9)   = ext_cff_mss_ga(bnd_idx)
+
 
                    ! 1. snow and aerosol layer column mass (L_snw, L_aer [kg/m^2])
                    ! 2. optical Depths (tau_snw, tau_aer)
@@ -2877,7 +2892,7 @@ contains
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw=",L_snw(i)
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau=",tau_snw(i)
 
-                      do j=1,sno_nbr_aer
+                      do j=1,ice_nbr_aer
                          L_aer(i,j)   = L_snw(i)*mss_cnc_aer_lcl(i,j)
                          tau_aer(i,j) = L_aer(i,j)*ext_cff_mss_aer_lcl(j)
                       enddo
@@ -2892,7 +2907,7 @@ contains
                       omega_sum = 0._r8
                       g_sum     = 0._r8
 
-                      do j=1,sno_nbr_aer
+                      do j=1,ice_nbr_aer
                          tau_sum    = tau_sum + tau_aer(i,j)
                          omega_sum  = omega_sum + (tau_aer(i,j)*ss_alb_aer_lcl(j))
                          g_sum      = g_sum + (tau_aer(i,j)*ss_alb_aer_lcl(j)*asm_prm_aer_lcl(j))
@@ -3501,8 +3516,8 @@ contains
              ! Set local aerosol array
              do j=1,sno_nbr_aer
                 mss_cnc_aer_lcl(-nlevsno+1:0,j) = mss_cnc_aer_in(c_idx,:,j)
-                !write (iulog,*) "CAW c",c_idx, "j",j,"mss_cnc_aer_lcl", mss_cnc_aer_lcl(:,j)
              enddo
+             mss_cnc_aer_lcl(-nlevsno+1:0,9) = 0
 
              ! Set spectral underlying surface albedos to their corresponding VIS or NIR albedos
              !albsfc_lcl(1)                       = albsfc(c_idx,1)
@@ -3647,12 +3662,7 @@ contains
                       mss_cnc_aer_lcl(:,:) = 0._r8
                    endif
                   
-                  if ( (lnd_ice == 1) ) then
-                         mss_cnc_aer_lcl(1:10,1) = ice_bc_conc_wgted
-                         if (bnd_idx > 1) then
-                            mss_cnc_aer_lcl(1:10,1) = 0._r8
-                         endif
-                  endif 
+             
                    ! Define local Mie parameters based on snow grain size and aerosol species,
                    !  retrieved from a lookup table.
                    if (flg_slr_in == 1) then
