@@ -77,6 +77,16 @@ module SurfaceAlbedoType
      real(r8), pointer :: albsni_hst_col       (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
      real(r8), pointer :: albd_ice             (:,:) => null() ! col snow albedo, direct , for history files (col,bnd) [frc]
      real(r8), pointer :: albi_ice             (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
+    
+     real(r8), pointer :: albgrd_pur_ice_col       (:,:) => null() ! col pure ice ground direct albedo     (numrad)
+     real(r8), pointer :: albgrd_bc_ice_col       (:,:) => null() ! col ice w/ BC ground direct albedo     (numrad)
+     real(r8), pointer :: albgrd_dt_ice_col       (:,:) => null() ! col ice w/ dust ground direct albedo     (numrad)
+     real(r8), pointer :: albgrd_ga_ice_col       (:,:) => null() ! col ice w/ glacier algae ground direct albedo     (numrad)
+
+     real(r8), pointer :: albgri_pur_ice_col       (:,:) => null() ! col pure ice ground diffuse albedo     (numrad)
+     real(r8), pointer :: albgri_bc_ice_col       (:,:) => null() ! col ice w/ BC ground diffuse albedo     (numrad)
+     real(r8), pointer :: albgri_dt_ice_col       (:,:) => null() ! col ice w/ dust ground diffuse albedo     (numrad)
+     real(r8), pointer :: albgri_ga_ice_col       (:,:) => null() ! col ice w/ glacier algae ground diffuse albedo     (numrad)
      
      real(r8), pointer  :: fsr_vis_d_ln_ice_col    (:) => null() ! COL LAND ICE reflected direct beam vis solar radiation at local noon (W/m**2) +CAW
      real(r8), pointer  :: fsr_nir_d_ln_ice_col    (:) => null() ! COL LAND ICE patch reflected direct beam nir solar radiation at local noon (W/m**2) CAW
@@ -285,7 +295,17 @@ contains
     allocate(this%albi_patch         (begp:endp,numrad))       ; this%albi_patch         (:,:) =spval
     allocate(this%albd_ice           (begc:endc,numrad))       ; this%albd_ice           (:,:) =spval !+CAW
     allocate(this%albi_ice           (begc:endc,numrad))       ; this%albi_ice           (:,:) =spval !+CAW
-    
+
+    allocate(this%albgrd_pur_ice_col    (begc:endc,numrad))       ; this%albgrd_pur_ice_col    (:,:) =spval ! +CAW 
+    allocate(this%albgrd_bc_ice_col     (begc:endc,numrad))       ; this%albgrd_bc_ice_col     (:,:) =spval ! +CAW
+    allocate(this%albgrd_dt_ice_col     (begc:endc,numrad))       ; this%albgrd_dt_ice_col     (:,:) =spval ! +CAW
+    allocate(this%albgrd_ga_ice_col     (begc:endc,numrad))       ; this%albgrd_ga_ice_col     (:,:) =spval ! +CAW
+
+    allocate(this%albgri_pur_ice_col    (begc:endc,numrad))       ; this%albgri_pur_ice_col    (:,:) =spval ! +CAW
+    allocate(this%albgri_bc_ice_col     (begc:endc,numrad))       ; this%albgri_bc_ice_col     (:,:) =spval ! +CAW
+    allocate(this%albgri_dt_ice_col     (begc:endc,numrad))       ; this%albgri_dt_ice_col     (:,:) =spval ! +CAW
+    allocate(this%albgri_ga_ice_col     (begc:endc,numrad))       ; this%albgri_ga_ice_col     (:,:) =spval ! +CAW
+
     allocate(this%fsr_vis_d_ln_ice_col    (begc:endc))              ; this%fsr_vis_d_ln_ice_col    (:)   = spval
     allocate(this%fsr_nir_d_ln_ice_col    (begc:endc))              ; this%fsr_nir_d_ln_ice_col    (:)   = spval
     
@@ -423,7 +443,47 @@ contains
     call hist_addfld1d (fname='FSRVI_ICE', units='W/m^2',  &
          avgflag='A', long_name='diffuse vis reflected solar radiation over lnd ice', &
          ptr_col=this%fsr_vis_i_ice_col, default='inactive')
-   
+  
+    this%albgrd_pur_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBD_ICE_CLEAN', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice clean ice (direct)', &
+         ptr_col=this%albgrd_pur_ice_col, default='inactive', c2l_scale_type='urbanf') 
+
+    this%albgri_pur_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBI_ICE_CLEAN', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice clean ice (indirect)', &
+         ptr_col=this%albgri_pur_ice_col, default='inactive', c2l_scale_type='urbanf')
+
+    this%albgrd_bc_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBD_ICE_BC', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice w/BC (direct)', &
+         ptr_col=this%albgrd_bc_ice_col, default='inactive', c2l_scale_type='urbanf')
+
+    this%albgri_bc_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBI_ICE_BC', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice w/ BC (indirect)', &
+         ptr_col=this%albgri_bc_ice_col, default='inactive', c2l_scale_type='urbanf')
+    
+    this%albgrd_dt_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBD_ICE_DT', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice w/ DUST (direct)', &
+         ptr_col=this%albgrd_dt_ice_col, default='inactive', c2l_scale_type='urbanf')
+
+    this%albgri_dt_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBI_ICE_DT', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice w/ DUST (indirect)', &
+         ptr_col=this%albgri_dt_ice_col, default='inactive', c2l_scale_type='urbanf')
+
+    this%albgrd_ga_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBD_ICE_GA', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice w/ Glacier algae (direct)', &
+         ptr_col=this%albgrd_ga_ice_col, default='inactive', c2l_scale_type='urbanf')
+
+    this%albgri_ga_ice_col(begc:endc,:) = spval  ! +CAW
+    call hist_addfld2d (fname='ALBI_ICE_GA', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice w/ GLACIER ALGAE (indirect)', &
+         ptr_col=this%albgri_ga_ice_col, default='inactive', c2l_scale_type='urbanf')
+
     this%bare_ice_flg(begc:endc) = spval
     call hist_addfld1d (fname='BARE_ICE_FLG', units='unitless', &
          avgflag='I', long_name='flag for when there is bare land ice', &
@@ -468,6 +528,15 @@ contains
     this%albgri_oc_col  (begc:endc, :) = 0.2_r8
     this%albgrd_dst_col (begc:endc, :) = 0.2_r8
     this%albgri_dst_col (begc:endc, :) = 0.2_r8
+
+    this%albgrd_pur_ice_col(begc:endc, :) = 0.2_r8
+    this%albgrd_bc_ice_col (begc:endc, :) = 0.2_r8
+    this%albgrd_dt_ice_col (begc:endc, :) = 0.2_r8
+    this%albgrd_ga_ice_col (begc:endc, :) = 0.2_r8
+    this%albgri_pur_ice_col(begc:endc, :) = 0.2_r8
+    this%albgri_bc_ice_col (begc:endc, :) = 0.2_r8
+    this%albgri_dt_ice_col (begc:endc, :) = 0.2_r8
+    this%albgri_ga_ice_col (begc:endc, :) = 0.2_r8
 
     this%fabi_patch     (begp:endp, :) = 0.0_r8
     this%fabd_patch     (begp:endp, :) = 0.0_r8

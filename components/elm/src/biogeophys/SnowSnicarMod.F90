@@ -124,12 +124,15 @@ module SnowSnicarMod
   real(r8) :: sca_cff_vlm_airbbl(idx_Mie_ice_mx,numrad_snw); !+ CAW 
   real(r8) :: asm_prm_airbbl(idx_Mie_ice_mx,numrad_snw);     !+ CAW 
   
-  integer,  parameter :: num_mons = 324
+  integer,  parameter :: num_mons = 38
+  ! integer,  parameter :: num_mons = 324
   integer,  parameter :: num_lats = 360
   integer,  parameter :: num_lons = 720
   real(r8) :: ice_density(num_lons,num_lats,num_mons)
   real(r8) :: bbl_eff_rad(num_lons,num_lats,num_mons)
   real(r8) :: lnd_ice_bc(num_lons,num_lats,num_mons)
+  real(r8) :: lnd_ice_dst(num_lons,num_lats,num_mons)
+  real(r8) :: lnd_ice_ga(num_lons,num_lats,num_mons)
   real(r8) :: smap1_lat(num_lats)
   real(r8) :: smap1_lon(num_lons) 
   ! diffuse radiation weighted ice optical properties
@@ -1620,7 +1623,9 @@ contains
       if(masterproc) write(iulog,*) subname,trim(ficephyprop)
       call ncd_io( 'snicaradv4_ice_rho', ice_density,'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'snicaradv4_bbl_effrad', bbl_eff_rad,'read', ncid2, posNOTonfile=.true.)
-      call ncd_io( 'snicaradv4_bc_conc', lnd_ice_bc,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'prs_bc_conc', lnd_ice_bc,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'prs_dst_conc', lnd_ice_dst,'read', ncid2, posNOTonfile=.true.)
+      call ncd_io( 'prs_ga_conc', lnd_ice_ga,'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'lat', smap1_lat,'read', ncid2, posNOTonfile=.true.)
       call ncd_io( 'lon', smap1_lon,'read', ncid2, posNOTonfile=.true.)
       
@@ -1903,7 +1908,7 @@ contains
    !-----------------------------------------------------------------------
    subroutine SNICAR_AD_RT (flg_snw_ice, bounds, num_nourbanc, filter_nourbanc,  &
                          coszen, flg_slr_in, h2osno_liq, h2osno_ice,h2osoi_liq, h2osoi_ice, snw_rds,   &
-                         mss_cnc_aer_in, albsfc, albout, bare_ice_albout, flx_abs)
+                         mss_cnc_aer_in, glc_ice_lac_flg_in,albsfc, albout, bare_ice_albout, flx_abs)
      !
      ! !DESCRIPTION:
      ! Determine reflectance of, and vertically-resolved solar absorption in,
@@ -1954,6 +1959,7 @@ contains
      real(r8)          , intent(in)  :: h2osoi_ice     ( bounds%begc: , -nlevsno+1: )      ! +CAW
      integer           , intent(in)  :: snw_rds        ( bounds%begc: , -nlevsno+1: )      ! snow effective radius (col,lyr) [microns, m^-6]
      real(r8)          , intent(in)  :: mss_cnc_aer_in ( bounds%begc: , -nlevsno+1: , 1: ) ! mass concentration of all aerosol species (col,lyr,aer) [kg/kg]
+     integer           , intent(in)  :: glc_ice_lac_flg_in                                 ! flag: =0 no glacier LAC ,=1 BC, =2 DUST, =3 GLACIER ALGAE, =4 all glacier ice LAC 
      real(r8)          , intent(in)  :: albsfc         ( bounds%begc: , 1: )               ! albedo of surface underlying snow (col,bnd) [frc]
      real(r8)          , intent(out) :: albout         ( bounds%begc: , 1: )               ! snow albedo, averaged into 2 bands (=0 if no sun or no snow) (col,bnd) [frc]
      real(r8)          , intent(out) :: bare_ice_albout( bounds%begc: , 1: )               ! +CAW ICE albedo, averaged into 2 bands (=0 if no sun or no snow) (col,bnd) [frc]
@@ -2106,6 +2112,8 @@ contains
      real(r8):: ice_density_wgted
      real(r8):: bbl_eff_rad_wgted
      real(r8):: ice_bc_conc_wgted
+     real(r8):: ice_dst_conc_wgted
+     real(r8):: ice_ga_conc_wgted
      integer :: bbl_eff_rad_ind
      data caldaym / 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335, 366 /
      integer :: bare_ice_indx_lcl
@@ -2503,9 +2511,18 @@ contains
 
                  !endif
                  ice_bc_conc_wgted = lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
-                                  +lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2 
-                 ice_bc_conc_wgted=ice_bc_conc_wgted*1.e-09_r8 ! convert from ng/g -> kg/kg 
-               
+                                     +lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2 
+                 ! ice_bc_conc_wgted=ice_bc_conc_wgted*1.e-09_r8 ! convert from ng/g -> kg/kg 
+                 ice_bc_conc_wgted=ice_bc_conc_wgted*1.e-06_r8 ! convert from ug/g -> kg/kg 
+
+                 ice_ga_conc_wgted = lnd_ice_ga(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
+                                     +lnd_ice_ga(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
+                 ice_ga_conc_wgted=ice_ga_conc_wgted*1.e-06_r8 ! convert from ug/g -> kg/kg 
+
+                 ice_dst_conc_wgted = lnd_ice_dst(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
+                                     +lnd_ice_dst(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
+                 ice_dst_conc_wgted=ice_dst_conc_wgted*1.e-06_r8 ! convert from ug/g -> kg/kg 
+
                  ice_density_wgted = ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 & 
                                 +ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2
                  bbl_eff_rad_wgted = bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
@@ -2670,11 +2687,22 @@ contains
 
              mss_cnc_aer_lcl(:,:) = 0._r8
                   if ( (lnd_ice == 1) ) then
-                         mss_cnc_aer_lcl(1:10,2) = ice_bc_conc_wgted ! hydrophoibic non-coated BC 
-                         mss_cnc_aer_lcl(1:10,7) = ice_bc_conc_wgted ! dust species 3 
-                         mss_cnc_aer_lcl(1:3,9)  = ice_bc_conc_wgted
+                          if (glc_ice_lac_flg_in==0) then ! CLEAN ICE 
+                                  mss_cnc_aer_lcl(:,:) = 0._r8
+                          else if (glc_ice_lac_flg_in==1) then ! BC
+                                  mss_cnc_aer_lcl(1:10,2) = ice_bc_conc_wgted ! hydrophoibic non-coated BC 
+                          else if (glc_ice_lac_flg_in==2 ) then ! DUST 
+                                  mss_cnc_aer_lcl(1:10,7) = ice_dst_conc_wgted ! dust species 3
+                          else if (glc_ice_lac_flg_in==3) then ! GLACIER ALGAE   
+                                  mss_cnc_aer_lcl(1:3,9)  = ice_ga_conc_wgted ! glacier algae 
+                          else if (glc_ice_lac_flg_in==4) then ! all glacier algae lacs 
+                                  mss_cnc_aer_lcl(1:10,2) = ice_bc_conc_wgted ! hydrophoibic non-coated BC
+                                  mss_cnc_aer_lcl(1:10,7) = ice_dst_conc_wgted ! dust species 3
+                                  mss_cnc_aer_lcl(1:3,9)  = ice_ga_conc_wgted ! glacier algae    
+                          endif 
+
                          if (bnd_idx > 1) then
-                            mss_cnc_aer_lcl(1:10,1) = 0._r8
+                            mss_cnc_aer_lcl(:,:) = 0._r8
                          endif
                   endif
 
