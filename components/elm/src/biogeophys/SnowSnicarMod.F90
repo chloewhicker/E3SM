@@ -1597,7 +1597,11 @@ contains
       ! Diffuse incident spectral flux:
       call ncd_io( 'flx_wgt_dif', flx_wgt_dif,           'read', ncid, readvar=readvar, posNOTonfile=.true.)
       if ((atm_type_index > 0) .and. (.not. readvar)) call endrun( "ERROR: error in reading in flx_wgt_dif data" )
-     
+    
+      ! Glacier Algae SAS - Mie parameters ; length 40um, rad 4um
+      call ncd_io( 'ss_alb_glacalg', ss_alb_ga,           'read', ncid, posNOTonfile=.true.)
+      call ncd_io( 'asm_prm_glacalg', asm_prm_ga,         'read', ncid, posNOTonfile=.true.)
+      call ncd_io( 'ext_cff_mss_glacalg', ext_cff_mss_ga, 'read', ncid, posNOTonfile=.true.)
 
       ! Open ice properties file 
       !if(masterproc) write(iulog,*) 'Attempting to read ice physical properties .....'
@@ -1726,9 +1730,9 @@ contains
       call ncd_io( 'ext_cff_mss_dust04', ext_cff_mss_dst4, 'read', ncid, posNOTonfile=.true.)
       !
       ! Glacier Algae SAS - Mie parameters ; length 40um, rad 4um
-      call ncd_io( 'ss_alb_glacalg', ss_alb_ga,           'read', ncid, posNOTonfile=.true.)
-      call ncd_io( 'asm_prm_glacalg', asm_prm_ga,         'read', ncid, posNOTonfile=.true.)
-      call ncd_io( 'ext_cff_mss_glacalg', ext_cff_mss_ga, 'read', ncid, posNOTonfile=.true.)
+      !call ncd_io( 'ss_alb_glacalg', ss_alb_ga,           'read', ncid, posNOTonfile=.true.)
+      !call ncd_io( 'asm_prm_glacalg', asm_prm_ga,         'read', ncid, posNOTonfile=.true.)
+      !call ncd_io( 'ext_cff_mss_glacalg', ext_cff_mss_ga, 'read', ncid, posNOTonfile=.true.)
       !
       !
      !$acc update device( &
@@ -1938,11 +1942,8 @@ contains
      ! !USES:
       !$acc routine seq
      use elm_varpar       , only : nlevsno, numrad
-     use elm_time_manager , only : get_nstep
-     use clm_time_manager , only : get_nstep, get_curr_calday
+     use elm_time_manager , only : get_nstep, get_curr_calday, get_curr_date
      use timeinfoMod      , only : mon_curr ! CAW
-     use clm_time_manager , only : get_nstep, get_curr_calday, &
-             get_curr_date
      use shr_const_mod    , only : SHR_CONST_PI
      use elm_varctl       , only : snow_shape, snicar_atm_type, use_dust_snow_internal_mixing, use_snicar_lndice
     
@@ -2447,7 +2448,8 @@ contains
               !get weights for interpolation
               call get_curr_date( yr, mon, day, tod )
               calday_curr = get_curr_calday()
-              aindex(1) = ((yr-1995)*12)+mon
+             ! aindex(1) = ((yr-1995)*12)+mon ! for MODIS inputdata 
+             aindex(1) = ((yr-2019)*12)+mon ! for PRISMA data
 
               if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
                   wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
@@ -2530,21 +2532,26 @@ contains
                  grc_ws%bare_ice_dens(g_idx) = ice_density_wgted
                  grc_ws%bare_ice_abr(g_idx)  = bbl_eff_rad_wgted
                  grc_ws%bare_ice_bccnc(g_idx)= ice_bc_conc_wgted
-                        if (0==1) then 
-                               ! write(iulog,*) "CAW c",c_idx,"g_idx",g_idx
+                        if (1==0) then
+
+                                write(iulog,*) "CAW c",c_idx,"g_idx",g_idx
                                ! write(iulog,*) "CAW c",c_idx,"bare_ice_indx",bare_ice_indx_lcl,"tmpy",bare_ice_indy_lcl
                                !write(iulog,*) "CAW c",c_idx,"grc_pp%bare_ice_indx(g_idx)",grc_pp%bare_ice_indx(g_idx),"grc_pp%bare_ice_indy(g_idx)",grc_pp%bare_ice_indy(g_idx)
-                               ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(tmpx(g_idx))",smap1_lon(bare_ice_indx_lcl)
-                               ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(tmpy(g_idx))",smap1_lat(bare_ice_indy_lcl)
-                               ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
-                               ! write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
-                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density",ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
-                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"lnd_ice_bc",lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
-                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad",bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lon(tmpx(g_idx))",smap1_lon(bare_ice_indx_lcl)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"smap1_lat(tmpy(g_idx))",smap1_lat(bare_ice_indy_lcl)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%londeg(g_idx)",grc_pp%londeg(g_idx)
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"grc_pp%latdeg(g_idx)",grc_pp%latdeg(g_idx)
+                               
+                                !write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density",ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
+                                !write(iulog,*) "CAW c",c_idx,"g",g_idx,"lnd_ice_bc",lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
+                                !write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad",bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
                                 write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_density_wgted",ice_density_wgted
                                 write(iulog,*) "CAW c",c_idx,"g",g_idx,"bbl_eff_rad_wgted",bbl_eff_rad_wgted
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_bc_conc_wgted",ice_bc_conc_wgted
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_ga_conc_wgted",ice_ga_conc_wgted
+                                write(iulog,*) "CAW c",c_idx,"g",g_idx,"ice_dst_conc_wgted",ice_dst_conc_wgted
                                 write(iulog,*) "CAW c",c_idx,"month",mon,"calday",calday_curr,"day",day
-                                write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
+                                !write(iulog,*) "CAW c",c_idx,"wt1", wt1, "wt2", wt2
                                 write(iulog,*) "CAW c",c_idx,"aindex(1)", aindex(1), "aindex(2)", aindex(2)
                         endif
               else 
@@ -2705,6 +2712,9 @@ contains
                             mss_cnc_aer_lcl(:,:) = 0._r8
                          endif
                   endif
+               mss_cnc_aer_lcl(:,:) = 0._r8
+               ! CAW CHANGE ~!!!!!
+
 
                ! note that we can remove flg_dover since this algorithm is
                ! stable for mu_not > 0.01
@@ -2920,6 +2930,8 @@ contains
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_ice_lcl(:)",h2osoi_ice_lcl(i)
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"h2oSOI_liq_lcl(:)",h2osoi_liq_lcl(i) 
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_snw=",L_snw(i)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"L_aer(i,:)=",L_aer(i,:)
+                      !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"ext_cff_mss_aer_lcl(:)=",ext_cff_mss_aer_lcl(:)
                       !write(iulog,*) "CAW c",c_idx,"bnd",bnd_idx,"layer",i,"tau=",tau_snw(i)
 
                       do j=1,ice_nbr_aer

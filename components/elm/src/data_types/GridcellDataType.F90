@@ -368,29 +368,29 @@ contains
     ! allocate for each member of grc_ws
     !-----------------------------------------------------------------------
 
-    allocate(this%liq1           (begg:endg))       ; this%liq1           (:)   = nan
-    allocate(this%liq2           (begg:endg))       ; this%liq2           (:)   = nan
-    allocate(this%ice1           (begg:endg))       ; this%ice1           (:)   = nan
-    allocate(this%ice2           (begg:endg))       ; this%ice2           (:)   = nan
-    allocate(this%tws            (begg:endg))       ; this%tws            (:)   = nan
-    allocate(this%tws_month_beg  (begg:endg))       ; this%tws_month_beg  (:)   = nan
-    allocate(this%tws_month_end  (begg:endg))       ; this%tws_month_end  (:)   = nan
-    allocate(this%begwb          (begg:endg))       ; this%begwb          (:)   = nan
-    allocate(this%endwb          (begg:endg))       ; this%endwb          (:)   = nan
-    allocate(this%errh2o         (begg:endg))       ; this%errh2o         (:)   = nan
-    allocate(this%beg_h2ocan     (begg:endg))       ; this%beg_h2ocan     (:)   = nan
-    allocate(this%beg_h2osno     (begg:endg))       ; this%beg_h2osno     (:)   = nan
-    allocate(this%beg_h2osfc     (begg:endg))       ; this%beg_h2osfc     (:)   = nan
-    allocate(this%beg_h2osoi_liq (begg:endg))       ; this%beg_h2osoi_liq (:)   = nan
-    allocate(this%beg_h2osoi_ice (begg:endg))       ; this%beg_h2osoi_ice (:)   = nan
-    allocate(this%end_h2ocan     (begg:endg))       ; this%end_h2ocan     (:)   = nan
-    allocate(this%end_h2osno     (begg:endg))       ; this%end_h2osno     (:)   = nan
-    allocate(this%end_h2osfc     (begg:endg))       ; this%end_h2osfc     (:)   = nan
-    allocate(this%end_h2osoi_liq (begg:endg))       ; this%end_h2osoi_liq (:)   = nan
-    allocate(this%end_h2osoi_ice (begg:endg))       ; this%end_h2osoi_ice (:)   = nan
-    allocate(this%bare_ice_dens  (begg:endg))       ; this%bare_ice_dens  (:)   = nan
-    allocate(this%bare_ice_abr   (begg:endg))       ; this%bare_ice_abr   (:)   = nan
-    allocate(this%bare_ice_bccnc (begg:endg))       ; this%bare_ice_bccnc (:)   = nan
+    allocate(this%liq1           (begg:endg))       ; this%liq1           (:)   = spval
+    allocate(this%liq2           (begg:endg))       ; this%liq2           (:)   = spval
+    allocate(this%ice1           (begg:endg))       ; this%ice1           (:)   = spval
+    allocate(this%ice2           (begg:endg))       ; this%ice2           (:)   = spval
+    allocate(this%tws            (begg:endg))       ; this%tws            (:)   = spval
+    allocate(this%tws_month_beg  (begg:endg))       ; this%tws_month_beg  (:)   = spval
+    allocate(this%tws_month_end  (begg:endg))       ; this%tws_month_end  (:)   = spval
+    allocate(this%begwb          (begg:endg))       ; this%begwb          (:)   = spval
+    allocate(this%endwb          (begg:endg))       ; this%endwb          (:)   = spval
+    allocate(this%errh2o         (begg:endg))       ; this%errh2o         (:)   = spval
+    allocate(this%beg_h2ocan     (begg:endg))       ; this%beg_h2ocan     (:)   = spval
+    allocate(this%beg_h2osno     (begg:endg))       ; this%beg_h2osno     (:)   = spval
+    allocate(this%beg_h2osfc     (begg:endg))       ; this%beg_h2osfc     (:)   = spval
+    allocate(this%beg_h2osoi_liq (begg:endg))       ; this%beg_h2osoi_liq (:)   = spval
+    allocate(this%beg_h2osoi_ice (begg:endg))       ; this%beg_h2osoi_ice (:)   = spval
+    allocate(this%end_h2ocan     (begg:endg))       ; this%end_h2ocan     (:)   = spval
+    allocate(this%end_h2osno     (begg:endg))       ; this%end_h2osno     (:)   = spval
+    allocate(this%end_h2osfc     (begg:endg))       ; this%end_h2osfc     (:)   = spval
+    allocate(this%end_h2osoi_liq (begg:endg))       ; this%end_h2osoi_liq (:)   = spval
+    allocate(this%end_h2osoi_ice (begg:endg))       ; this%end_h2osoi_ice (:)   = spval
+    allocate(this%bare_ice_dens  (begg:endg))       ; this%bare_ice_dens  (:)   = spval
+    allocate(this%bare_ice_abr   (begg:endg))       ; this%bare_ice_abr   (:)   = spval
+    allocate(this%bare_ice_bccnc (begg:endg))       ; this%bare_ice_bccnc (:)   = spval
     !-----------------------------------------------------------------------
     ! initialize history fields for select members of grc_ws
     !-----------------------------------------------------------------------

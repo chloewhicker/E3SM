@@ -667,18 +667,18 @@ contains
                    ! Settling as a result of destructive metamorphism
                    if (.not. use_extrasnowlayers) then
                       ddz1 = -c3*dexpf 
-                      if (bi > dm) ddz1 = ddz1*exp(-46.0e-3_r8*(bi-dm))
+                      if (bi > dm) ddz1 = ddz1*exp(-46.0e-3_r8*(min(bi,1000._r8)-dm))
                    else
                       ! amschnei@uci.edu: additional compaction term for new snow viscosity
                       !                   from Lehning et al. (2002), eq. (36)
                       ddz1_fresh = (-grav * (burden(c) + wx/2._r8)) / &
-                                   (0.007_r8 * bi**(4.75_r8 + td/40._r8))
+                                   (0.007_r8 * min(bi,1000._r8)**(4.75_r8 + td/40._r8))
                       snw_ssa = 3.e6_r8 / (denice * snw_rds(c,j))
                       if (snw_ssa < 50._r8) then
                           ddz1_fresh = ddz1_fresh * exp(-46.e-2_r8 * (50._r8 - snw_ssa))
                       endif
                       ddz1 = -c3_ams*dexpf
-                      if (bi > rho_dm) ddz1 = ddz1*exp(-46.0e-3_r8*(bi-rho_dm))
+                      if (bi > rho_dm) ddz1 = ddz1*exp(-46.0e-3_r8*(min(bi,1000._r8)-rho_dm))
                       ddz1 = ddz1 + ddz1_fresh
                    endif
 
@@ -688,7 +688,7 @@ contains
 
                    ! Compaction due to overburden
                    if (.not. use_extrasnowlayers) then
-                      ddz2 = -(burden(c)+wx/2._r8)*exp(-0.08_r8*td - c2*bi)/eta0 
+                      ddz2 = -(burden(c)+wx/2._r8)*exp(-0.08_r8*td - c2*min(bi,1000._r8))/eta0 
                    else
                       ! amschnei@uci.edu: Semi-empirical compaction
                       !                   from Arthern et al. (2010), eq. (B1)
@@ -699,7 +699,7 @@ contains
                                  (snw_rds(c,j) * 1.e-6_r8 * snw_rds(c,j) * 1.e-6_r8) - &
                                  1.0e-10_r8 ! small additional constant
                       else ! High density, i.e. firn
-                         ddz2 = (-k_creep_firn * (max(denice / bi, 1._r8) - 1._r8) * &
+                         ddz2 = (-k_creep_firn * (max(denice / min(bi,1000._r8), 1._r8) - 1._r8) * &
                                  exp(-60.e6_r8 / (rgas * t_soisno(c,j))) * p_gls) / &
                                  (snw_rds(c,j) * 1.e-6_r8 * snw_rds(c,j) * 1.e-6_r8) - &
                                  1.0e-10_r8 ! small additional constant
