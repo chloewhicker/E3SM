@@ -124,8 +124,7 @@ module SnowSnicarMod
   real(r8) :: sca_cff_vlm_airbbl(idx_Mie_ice_mx,numrad_snw); !+ CAW 
   real(r8) :: asm_prm_airbbl(idx_Mie_ice_mx,numrad_snw);     !+ CAW 
   
-  integer,  parameter :: num_mons = 38
-  ! integer,  parameter :: num_mons = 324
+  integer,  parameter :: num_mons = 337
   integer,  parameter :: num_lats = 360
   integer,  parameter :: num_lons = 720
   real(r8) :: ice_density(num_lons,num_lats,num_mons)
@@ -2448,8 +2447,7 @@ contains
               !get weights for interpolation
               call get_curr_date( yr, mon, day, tod )
               calday_curr = get_curr_calday()
-             ! aindex(1) = ((yr-1995)*12)+mon ! for MODIS inputdata 
-             aindex(1) = ((yr-2019)*12)+mon ! for PRISMA data
+              aindex(1) = ((yr-1995)*12)+mon ! for MODIS inputdata 
 
               if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
                   wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
@@ -2501,17 +2499,7 @@ contains
                  bare_ice_indx_lcl = grc_pp%bare_ice_indx(g_idx)
                  bare_ice_indy_lcl = grc_pp%bare_ice_indy(g_idx)
                
-                 !if ( (ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) == 910.0_r8) &
-                 !        .and. (bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) == 750.0_r8 )) then
-                      !write (iulog,*) "CAW c",c_idx,"ice_density=",ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) 
-                      !write (iulog,*) "CAW c",c_idx,"bbl_eff_rad=",bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) 
-                 !     ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) = 900.0_r8
-                 !     bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1)) = 1000.0_r8
-                      !write (iulog,*) "CAW CHANGED"
-                      !write (iulog,*) "CAW c",c_idx,"ice_density=",ice_density(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
-                      !write (iulog,*) "CAW c",c_idx,"bbl_eff_rad=",bbl_eff_rad(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))
-
-                 !endif
+                 
                  ice_bc_conc_wgted = lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(1))*wt1 &
                                      +lnd_ice_bc(grc_pp%bare_ice_indx(g_idx),grc_pp%bare_ice_indy(g_idx),aindex(2))*wt2 
                  ! ice_bc_conc_wgted=ice_bc_conc_wgted*1.e-09_r8 ! convert from ng/g -> kg/kg 
@@ -2712,9 +2700,6 @@ contains
                             mss_cnc_aer_lcl(:,:) = 0._r8
                          endif
                   endif
-               mss_cnc_aer_lcl(:,:) = 0._r8
-               ! CAW CHANGE ~!!!!!
-
 
                ! note that we can remove flg_dover since this algorithm is
                ! stable for mu_not > 0.01

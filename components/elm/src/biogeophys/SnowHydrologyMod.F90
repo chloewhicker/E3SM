@@ -663,7 +663,7 @@ contains
                    fi = h2osoi_ice(c,j) / wx
                    td = tfrz-t_soisno(c,j)
                    dexpf = exp(-c4*td)
-
+                   
                    ! Settling as a result of destructive metamorphism
                    if (.not. use_extrasnowlayers) then
                       ddz1 = -c3*dexpf 
@@ -672,7 +672,7 @@ contains
                       ! amschnei@uci.edu: additional compaction term for new snow viscosity
                       !                   from Lehning et al. (2002), eq. (36)
                       ddz1_fresh = (-grav * (burden(c) + wx/2._r8)) / &
-                                   (0.007_r8 * min(bi,1000._r8)**(4.75_r8 + td/40._r8))
+                                   (0.007_r8 * min(bi,1000._r8)**(4.75_r8 + max(td,0._r8)/40._r8))
                       snw_ssa = 3.e6_r8 / (denice * snw_rds(c,j))
                       if (snw_ssa < 50._r8) then
                           ddz1_fresh = ddz1_fresh * exp(-46.e-2_r8 * (50._r8 - snw_ssa))
