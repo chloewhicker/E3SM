@@ -124,7 +124,7 @@ module SnowSnicarMod
   real(r8) :: sca_cff_vlm_airbbl(idx_Mie_ice_mx,numrad_snw); !+ CAW 
   real(r8) :: asm_prm_airbbl(idx_Mie_ice_mx,numrad_snw);     !+ CAW 
   
-  integer,  parameter :: num_mons = 337
+  integer,  parameter :: num_mons = 60
   integer,  parameter :: num_lats = 360
   integer,  parameter :: num_lons = 720
   real(r8) :: ice_density(num_lons,num_lats,num_mons)
@@ -2447,7 +2447,8 @@ contains
               !get weights for interpolation
               call get_curr_date( yr, mon, day, tod )
               calday_curr = get_curr_calday()
-              aindex(1) = ((yr-1995)*12)+mon ! for MODIS inputdata 
+              !aindex(1) = ((yr-1995)*12)+mon ! for MODIS inputdata 
+              aindex(1) = ((yr-2019)*12)+mon ! for prs inputdata 
 
               if (calday_curr .le. (caldaym(mon+1)+caldaym(mon))/2._r8) then
                   wt1 = 0.5_r8 + (calday_curr-caldaym(mon))/(caldaym(mon+1)-caldaym(mon))
@@ -2685,13 +2686,13 @@ contains
                           if (glc_ice_lac_flg_in==0) then ! CLEAN ICE 
                                   mss_cnc_aer_lcl(:,:) = 0._r8
                           else if (glc_ice_lac_flg_in==1) then ! BC
-                                  mss_cnc_aer_lcl(1:10,2) = ice_bc_conc_wgted ! hydrophoibic non-coated BC 
+                                  mss_cnc_aer_lcl(1:10,2) = 0._r8!ice_bc_conc_wgted ! hydrophoibic non-coated BC 
                           else if (glc_ice_lac_flg_in==2 ) then ! DUST 
                                   mss_cnc_aer_lcl(1:10,7) = ice_dst_conc_wgted ! dust species 3
                           else if (glc_ice_lac_flg_in==3) then ! GLACIER ALGAE   
                                   mss_cnc_aer_lcl(1:3,9)  = ice_ga_conc_wgted ! glacier algae 
                           else if (glc_ice_lac_flg_in==4) then ! all glacier algae lacs 
-                                  mss_cnc_aer_lcl(1:10,2) = ice_bc_conc_wgted ! hydrophoibic non-coated BC
+                                  mss_cnc_aer_lcl(1:10,2) = 0._r8!ice_bc_conc_wgted ! hydrophoibic non-coated BC
                                   mss_cnc_aer_lcl(1:10,7) = ice_dst_conc_wgted ! dust species 3
                                   mss_cnc_aer_lcl(1:3,9)  = ice_ga_conc_wgted ! glacier algae    
                           endif 
@@ -2700,6 +2701,9 @@ contains
                             mss_cnc_aer_lcl(:,:) = 0._r8
                          endif
                   endif
+
+             !mss_cnc_aer_lcl(:,:) = 0._r8
+             ! CAW change
 
                ! note that we can remove flg_dover since this algorithm is
                ! stable for mu_not > 0.01
