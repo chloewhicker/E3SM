@@ -437,6 +437,11 @@ SNICAR (SNow, ICe, and Aerosol Radiative model) optical data file name
 SNICAR (SNow, ICe, and Aerosol Radiative model) snow aging data file name
 </entry>
 
+<entry id="ficephyprop" type="char*256" category="datasets"
+       input_pathname="abs" group="elm_inparm" valid_values="" >
+SNICAR (SNow, ICe, and Aerosol Radiative model) optical data file name
+</entry>
+
 <entry id="hist_avgflag_pertape" type="char*1(6)" category="history"
        group="elm_inparm" valid_values="A,I,X,M" >
 Per file averaging flag.
@@ -700,6 +705,11 @@ Toggle to turn on calculation of SNow and Ice Aerosol Radiation model (SNICAR) r
 Toggle to turn on SNICAR_AD snow shortwave algorithms
 The same snow shortwave algorithm can be turned on for sea-ice simulation
 with config_use_snicar_ad in mpas-seaice namelist
+</entry>
+
+<entry id="use_snicar_lndice" type="logical" category="physics"
+	group="elm_inparm" valid_values="" value=".true.">
+CAW  - toggle to use SNICAR_AD over land ice 
 </entry>
 
 <entry id="use_extrasnowlayers" type="logical" category="physics"

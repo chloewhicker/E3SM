@@ -54,7 +54,6 @@ module SolarAbsorbedType
      real(r8), pointer :: fsr_nir_d_patch        (:)  => null() ! patch reflected direct beam nir solar radiation (W/m**2)
      real(r8), pointer :: fsr_nir_i_patch        (:)  => null() ! patch reflected diffuse nir solar radiation (W/m**2)
      real(r8), pointer :: fsr_nir_d_ln_patch     (:)  => null() ! patch reflected direct beam nir solar radiation at local noon (W/m**2)
-
    contains
 
      procedure, public  :: Init
@@ -235,7 +234,7 @@ contains
     call hist_addfld1d (fname='FSRNDLN', units='W/m^2',  &
          avgflag='A', long_name='direct nir reflected solar radiation at local noon', &
          ptr_patch=this%fsr_nir_d_ln_patch, c2l_scale_type='urbanf')
-
+   
     this%sub_surf_abs_SW_col(begc:endc) = spval
     call hist_addfld1d (fname='SNOINTABS', units='%', &
          avgflag='A', long_name='Percent of incoming solar absorbed by lower snow layers', &
