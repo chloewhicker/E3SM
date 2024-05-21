@@ -75,6 +75,18 @@ module SurfaceAlbedoType
      real(r8), pointer :: albsoi_col           (:,:) => null() ! col soil albedo: diffuse (col,bnd) [frc]
      real(r8), pointer :: albsnd_hst_col       (:,:) => null() ! col snow albedo, direct , for history files (col,bnd) [frc]
      real(r8), pointer :: albsni_hst_col       (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
+     real(r8), pointer :: albd_ice             (:,:) => null() ! col snow albedo, direct , for history files (col,bnd) [frc]
+     real(r8), pointer :: albi_ice             (:,:) => null() ! col snow albedo, diffuse, for history files (col,bnd) [frc]
+     
+     real(r8), pointer  :: fsr_vis_d_ln_ice_col    (:) => null() ! COL LAND ICE reflected direct beam vis solar radiation at local noon (W/m**2) +CAW
+     real(r8), pointer  :: fsr_nir_d_ln_ice_col    (:) => null() ! COL LAND ICE patch reflected direct beam nir solar radiation at local noon (W/m**2) CAW
+     
+     real(r8), pointer  :: fsr_vis_d_ice_col    (:) => null() ! COL LAND ICE reflected direct beam vis solar radiation  (W/m**2) +CAW
+     real(r8), pointer  :: fsr_nir_d_ice_col    (:) => null() ! COL LAND ICE patch reflected direct beam nir solar radiation (W/m**2) CAW
+     real(r8), pointer  :: fsr_vis_i_ice_col    (:) => null() ! COL LAND ICE reflected diffuse beam vis solar radiation  (W/m**2) +CAW
+     real(r8), pointer  :: fsr_nir_i_ice_col    (:) => null() ! COL LAND ICE patch reflected diffuse beam nir solar radiation (W/m**2) CAW
+
+     real(r8), pointer :: bare_ice_flg         (:)   => null() ! flag for if there is bare land ice, for history files (col) [flg]
 
      real(r8), pointer :: fd_top_adjust        (:,:) => null() !adjustment factor for direct flux (numrad)
      real(r8), pointer :: fi_top_adjust        (:,:) => null() !adjustment factor for diffuse flux (numrad)
@@ -271,6 +283,18 @@ contains
     allocate(this%albgri_dst_col     (begc:endc,numrad))       ; this%albgri_dst_col     (:,:) =spval
     allocate(this%albd_patch         (begp:endp,numrad))       ; this%albd_patch         (:,:) =spval
     allocate(this%albi_patch         (begp:endp,numrad))       ; this%albi_patch         (:,:) =spval
+    allocate(this%albd_ice           (begc:endc,numrad))       ; this%albd_ice           (:,:) =spval !+CAW
+    allocate(this%albi_ice           (begc:endc,numrad))       ; this%albi_ice           (:,:) =spval !+CAW
+    
+    allocate(this%fsr_vis_d_ln_ice_col    (begc:endc))              ; this%fsr_vis_d_ln_ice_col    (:)   = spval
+    allocate(this%fsr_nir_d_ln_ice_col    (begc:endc))              ; this%fsr_nir_d_ln_ice_col    (:)   = spval
+    
+    allocate(this%fsr_vis_d_ice_col    (begc:endc))              ; this%fsr_vis_d_ice_col    (:)   = spval
+    allocate(this%fsr_nir_d_ice_col    (begc:endc))              ; this%fsr_nir_d_ice_col    (:)   = spval
+    
+    allocate(this%fsr_vis_i_ice_col    (begc:endc))              ; this%fsr_vis_i_ice_col    (:)   = spval
+    allocate(this%fsr_nir_i_ice_col    (begc:endc))              ; this%fsr_nir_i_ice_col    (:)   = spval
+    allocate(this%bare_ice_flg         (begc:endc))              ; this%bare_ice_flg         (:)   = spval !+CAW
 
     allocate(this%fd_top_adjust      (begp:endp,numrad))       ; this%fd_top_adjust      (:,:) =1._r8
     allocate(this%fi_top_adjust      (begp:endp,numrad))       ; this%fi_top_adjust      (:,:) =1._r8
@@ -292,10 +316,16 @@ contains
     allocate(this%fabd_sha_z_patch   (begp:endp,nlevcan))      ; this%fabd_sha_z_patch   (:,:) = 0._r8
     allocate(this%fabi_sun_z_patch   (begp:endp,nlevcan))      ; this%fabi_sun_z_patch   (:,:) = 0._r8
     allocate(this%fabi_sha_z_patch   (begp:endp,nlevcan))      ; this%fabi_sha_z_patch   (:,:) = 0._r8
+    
     allocate(this%flx_absdv_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absdv_col      (:,:) = spval
     allocate(this%flx_absdn_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absdn_col      (:,:) = spval
     allocate(this%flx_absiv_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absiv_col      (:,:) = spval
     allocate(this%flx_absin_col      (begc:endc,-nlevsno+1:1)) ; this%flx_absin_col      (:,:) = spval
+
+    !allocate(this%flx_absdv_col      (begc:endc,-nlevsno+1:15)) ; this%flx_absdv_col      (:,:) = spval !+CAW
+    !allocate(this%flx_absdn_col      (begc:endc,-nlevsno+1:15)) ; this%flx_absdn_col      (:,:) = spval !+CAW
+    !allocate(this%flx_absiv_col      (begc:endc,-nlevsno+1:15)) ; this%flx_absiv_col      (:,:) = spval !+CAW
+    !allocate(this%flx_absin_col      (begc:endc,-nlevsno+1:15)) ; this%flx_absin_col      (:,:) = spval !+CAW
 
     allocate(this%fsun_z_patch       (begp:endp,nlevcan))      ; this%fsun_z_patch       (:,:) = 0._r8
     allocate(this%tlai_z_patch       (begp:endp,nlevcan))      ; this%tlai_z_patch       (:,:) = 0._r8
@@ -354,6 +384,51 @@ contains
          avgflag='A', long_name='surface albedo (indirect)', &
          ptr_patch=this%albi_patch, default='inactive', c2l_scale_type='urbanf')
     
+    this%albd_ice(begc:endc,:) = spval
+    call hist_addfld2d (fname='ALBD_ICE', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice (direct)', &
+         ptr_col=this%albd_ice, default='inactive', c2l_scale_type='urbanf')
+
+    this%albi_ice(begc:endc,:) = spval
+    call hist_addfld2d (fname='ALBI_ICE', units='proportion', type2d='numrad', &
+         avgflag='A', long_name='surface albedo of ice (indirect)', &
+         ptr_col=this%albi_ice, default='inactive', c2l_scale_type='urbanf')
+
+    this%fsr_nir_d_ln_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRNDLN_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct nir reflected solar radiation at local noon over lnd ice', &
+         ptr_col=this%fsr_nir_d_ln_ice_col, default='inactive')
+
+    this%fsr_vis_d_ln_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRVDLN_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct vis reflected solar radiation at local noon over lnd ice', &
+         ptr_col=this%fsr_vis_d_ln_ice_col, default='inactive')
+
+    this%fsr_nir_d_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRND_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct nir reflected solar radiation over lnd ice', &
+         ptr_col=this%fsr_nir_d_ice_col, default='inactive')
+
+    this%fsr_vis_d_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRVD_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct vis reflected solar radiation over lnd ice', &
+         ptr_col=this%fsr_vis_d_ice_col, default='inactive')
+
+    this%fsr_nir_i_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRNI_ICE', units='W/m^2',  &
+         avgflag='A', long_name='diffuse nir reflected solar radiation over lnd ice', &
+         ptr_col=this%fsr_nir_i_ice_col, default='inactive')
+
+    this%fsr_vis_i_ice_col(begc:endc) = spval  ! +CAW
+    call hist_addfld1d (fname='FSRVI_ICE', units='W/m^2',  &
+         avgflag='A', long_name='diffuse vis reflected solar radiation over lnd ice', &
+         ptr_col=this%fsr_vis_i_ice_col, default='inactive')
+   
+    this%bare_ice_flg(begc:endc) = spval
+    call hist_addfld1d (fname='BARE_ICE_FLG', units='unitless', &
+         avgflag='I', long_name='flag for when there is bare land ice', &
+         ptr_col=this%bare_ice_flg, default='inactive')
+
   end subroutine InitHistory
 
   !-----------------------------------------------------------------------
@@ -381,7 +456,10 @@ contains
     this%albsni_hst_col (begc:endc, :) = 0.6_r8
     this%albd_patch     (begp:endp, :) = 0.2_r8
     this%albi_patch     (begp:endp, :) = 0.2_r8
-
+    !this%albd_ice       (begc:endc, :) = 0.2_r8
+    !this%albi_ice       (begc:endc, :) = 0.2_r8
+    this%bare_ice_flg    (begc:endc) = 0._r8
+   
     this%albgrd_pur_col (begc:endc, :) = 0.2_r8
     this%albgri_pur_col (begc:endc, :) = 0.2_r8
     this%albgrd_bc_col  (begc:endc, :) = 0.2_r8
@@ -460,6 +538,16 @@ contains
          long_name='surface albedo (diffuse) (0 to 1)', units='', &
          interpinic_flag='interp', readvar=readvar, data=this%albi_patch)
 
+  !  call restartvar(ncid=ncid, flag=flag, varname='albd_ice', xtype=ncd_double,  &
+  !       dim1name='pft', dim2name='numrad', switchdim=.true., &
+  !       long_name='ice surface albedo (direct) (0 to 1)', units='', &
+  !       interpinic_flag='interp', readvar=readvar, data=this%albd_ice)
+
+   ! call restartvar(ncid=ncid, flag=flag, varname='albi_ice', xtype=ncd_double,  &
+   !      dim1name='pft', dim2name='numrad', switchdim=.true., &
+   !      long_name='ice surface albedo (diffuse) (0 to 1)', units='', &
+   !      interpinic_flag='interp', readvar=readvar, data=this%albi_ice)
+     
     call restartvar(ncid=ncid, flag=flag, varname='albgrd', xtype=ncd_double,  &
          dim1name='column', dim2name='numrad', switchdim=.true., &
          long_name='ground albedo (direct) (0 to 1)', units='', &
@@ -803,7 +891,6 @@ contains
          dim1name='column', dim2name='levsno1', switchdim=.true., lowerb2=-nlevsno+1, upperb2=1, &
          long_name='snow layer flux absorption factors (direct, VIS)', units='fraction', &
          interpinic_flag='interp', readvar=readvar, data=this%flx_absdv_col)
-
     call restartvar(ncid=ncid, flag=flag, varname='flx_absdn', xtype=ncd_double,  &
          dim1name='column', dim2name='levsno1', switchdim=.true., lowerb2=-nlevsno+1, upperb2=1, &
          long_name='snow layer flux absorption factors (direct, NIR)', units='fraction', &

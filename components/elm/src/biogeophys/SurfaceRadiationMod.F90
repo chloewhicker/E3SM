@@ -102,10 +102,11 @@ contains
     type(bounds_type), intent(in) :: bounds
     !
     ! !LOCAL VARIABLES:
-    integer :: begp, endp
+    integer :: begp, endp !, begc, endc
     !---------------------------------------------------------------------
 
     begp = bounds%begp; endp = bounds%endp
+    !begc = bounds%begc; endc = bounds%endc ! +CAW
 
     allocate(this%sfc_frc_aer_patch     (begp:endp))              ; this%sfc_frc_aer_patch     (:)   = spval
     allocate(this%sfc_frc_bc_patch      (begp:endp))              ; this%sfc_frc_bc_patch      (:)   = spval
@@ -327,7 +328,7 @@ contains
       !$acc routine seq
      use elm_varpar       , only : numrad, nlevsno
      use elm_varcon       , only : spval, degpsec, isecspday
-     use landunit_varcon  , only : istsoil, istcrop
+     use landunit_varcon  , only : istsoil, istcrop, istice_mec, istice
      use elm_varctl       , only : subgridflag, use_snicar_frc
      use SnowSnicarMod    , only : DO_SNO_OC
      !
@@ -427,6 +428,8 @@ contains
           albgri_pur      =>    surfalb_vars%albgri_pur_col       , & ! Input:  [real(r8) (:,:) ] pure snow ground albedo (diffuse)
           albgrd_bc       =>    surfalb_vars%albgrd_bc_col        , & ! Input:  [real(r8) (:,:) ] ground albedo without BC (direct) (col,bnd)
           albgri_bc       =>    surfalb_vars%albgri_bc_col        , & ! Input:  [real(r8) (:,:) ] ground albedo without BC (diffuse) (col,bnd)
+          albd_ice        =>    surfalb_vars%albd_ice             , & ! Input:  [real(r8) (:,:) ]  ice surface albedo (direct)  + CAW
+          albi_ice        =>    surfalb_vars%albi_ice             , & ! Input:  [real(r8) (:,:) ]  ice surface albedo (diffuse) + CAW
           tlai            =>    canopystate_vars%tlai_patch       , & ! Input:  [real(r8) (:)   ] one-sided leaf area index
           elai            =>    canopystate_vars%elai_patch       , & ! Input:  [real(r8) (:)   ] one-sided leaf area index with burying by snow
           esai            =>    canopystate_vars%esai_patch       , & ! Input:  [real(r8) (:)   ] one-sided stem area index with burying by snow
@@ -455,6 +458,12 @@ contains
           fsds_vis_d      =>    surfrad_vars%fsds_vis_d_patch     , & ! Output: [real(r8) (:)   ] incident direct beam vis solar radiation (W/m**2)
           fsds_vis_i      =>    surfrad_vars%fsds_vis_i_patch     , & ! Output: [real(r8) (:)   ] incident diffuse vis solar radiation (W/m**2)
           fsds_vis_d_ln   =>    surfrad_vars%fsds_vis_d_ln_patch  , & ! Output: [real(r8) (:)   ] incident direct beam vis solar rad at local noon (W/m**2)
+          fsr_vis_d_ln_ice =>   surfalb_vars%fsr_vis_d_ln_ice_col , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam vis solar radiation at local noon (W/m**2) +CAW
+          fsr_nir_d_ln_ice =>   surfalb_vars%fsr_nir_d_ln_ice_col , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam nir solar radiation at local noon (W/m**2) +CAW
+          fsr_vis_d_ice    =>   surfalb_vars%fsr_vis_d_ice_col    , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam vis solar radiation (W/m**2) +CAW
+          fsr_nir_d_ice    =>   surfalb_vars%fsr_nir_d_ice_col    , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected direct beam nir solar radiation (W/m**2) +CAW
+          fsr_vis_i_ice    =>   surfalb_vars%fsr_vis_i_ice_col    , & ! Output: [real(r8) (:)   ] COL LAND ICE reflected diffuse beam vis solar radiation (W/m**2) +CAW
+          fsr_nir_i_ice    =>   surfalb_vars%fsr_nir_i_ice_col    , & ! Output: [real(r8) (:)   ]  COL LAND ICE reflected diffuse beam nir solar radiation (W/m**2) +CAW
           sfc_frc_aer     =>    surfrad_vars%sfc_frc_aer_patch    , & ! Output: [real(r8) (:)   ] surface forcing of snow with all aerosols (pft) [W/m2]
           sfc_frc_aer_sno =>    surfrad_vars%sfc_frc_aer_sno_patch, & ! Output: [real(r8) (:)   ] surface forcing of snow with all aerosols, averaged only when snow is present (pft) [W/m2]
           sfc_frc_bc      =>    surfrad_vars%sfc_frc_bc_patch     , & ! Output: [real(r8) (:)   ] surface forcing of snow with BC (pft) [W/m2]
@@ -474,7 +483,8 @@ contains
           )
 
           dtime = dtime_mod
-          secs = secs_curr 
+          secs = secs_curr
+          
        ! Initialize fluxes
        do fp = 1,num_nourbanp
           p = filter_nourbanp(fp)
@@ -531,6 +541,14 @@ contains
              tri(p,ib) = forc_solad(t,ib)*ftid(p,ib) + forc_solai(t,ib)*ftii(p,ib)
              ! Solar radiation absorbed by ground surface
              ! calculate absorbed solar by soil/snow separately
+
+             !if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+             !   write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+             !   write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+             !   write(iulog,*)"CAW surfrad c",c, "albsod",albsod(c,ib)
+             !   write(iulog,*)"CAW surfrad c",c, "albsoi",albsoi(c,ib)
+             !endif
+
              absrad  = trd(p,ib)*(1._r8-albsod(c,ib)) + tri(p,ib)*(1._r8-albsoi(c,ib))
              sabg_soil(p) = sabg_soil(p) + absrad
              absrad  = trd(p,ib)*(1._r8-albsnd_hst(c,ib)) + tri(p,ib)*(1._r8-albsni_hst(c,ib))
@@ -583,17 +601,40 @@ contains
           sub_surf_abs_SW(c) = 0._r8
 
           ! CASE1: No snow layers: all energy is absorbed in top soil layer
-          if (snl(c) == 0) then
+          !if (snl(c) == 0 .and. ((lun_pp%itype(l) /= 3 .or. lun_pp%itype(l) /= 4)) ) then
+          if (snl(c) == 0) then        
              sabg_lyr(p,:) = 0._r8
              sabg_lyr(p,1) = sabg(p)
              sabg_snl_sum  = sabg_lyr(p,1)
-
-             ! CASE 2: Snow layers present: absorbed radiation is scaled according to
+             
+            ! if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+            ! endif
+            ! CASE 2: Snow layers present: absorbed radiation is scaled according to
              ! flux factors computed by SNICAR
           else
+           !if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"lun_pp%itype",lun_pp%itype(l)            !+CAW
+            !    write(iulog,*)"CAW surfrad c",c,"SNL",snl(c)                              !+CAW
+           !endif                                                                  !+CAW
+
+ 
              do i = -nlevsno+1,1,1
                 sabg_lyr(p,i) = flx_absdv(c,i)*trd(p,1) + flx_absdn(c,i)*trd(p,2) + &
                      flx_absiv(c,i)*tri(p,1) + flx_absin(c,i)*tri(p,2)
+           !     if (lun_pp%itype(l) == 3 .or. lun_pp%itype(l) == 4)  then              !+CAW
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdv",flx_absdv(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdn",flx_absdn(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absdiv",flx_absiv(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"flx_absin",flx_absin(c,i)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,1)",trd(p,1)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"trd(p,2)",trd(p,2)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,1)",tri(p,1)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"tri(p,2)",tri(p,2)
+           !           write(iulog,*)"CAW surfrad c",c,"i",i,"sabg_lyr(p,i)",sabg_lyr(p,i)   !+CAW
+           !     endif                                                               !+CAW
+
                 ! summed radiation in active snow layers:
                 if (i >= snl(c)+1) then
                    sabg_snl_sum = sabg_snl_sum + sabg_lyr(p,i)
@@ -720,6 +761,8 @@ contains
           p = filter_nourbanp(fp)
           t = veg_pp%topounit(p)
           g = veg_pp%gridcell(p)
+          c = veg_pp%column(p) ! +CAW 
+          l = veg_pp%landunit(p)
 
           ! NDVI and reflected solar radiation
 
@@ -736,6 +779,18 @@ contains
           fsr_vis_i(p)  = albi(p,1)*forc_solai(t,1)
           fsr_nir_i(p)  = albi(p,2)*forc_solai(t,2)
 
+          if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1) then
+                fsr_vis_d_ice(c) = albd_ice(c,1)*forc_solad(t,1)
+                fsr_nir_d_ice(c) = albd_ice(c,2)*forc_solad(t,2)
+                fsr_vis_i_ice(c) = albi_ice(c,1)*forc_solai(t,1)
+                fsr_nir_i_ice(c) = albi_ice(c,2)*forc_solai(t,2)
+          else
+                fsr_vis_d_ice(c) = spval
+                fsr_nir_d_ice(c) = spval
+                fsr_vis_i_ice(c) = spval
+                fsr_nir_i_ice(c) = spval
+          end if
+
           local_secp1 = secs + nint((grc_pp%londeg(g)/degpsec)/dtime)*dtime
           local_secp1 = mod(local_secp1,isecspday)
           if (local_secp1 == isecspday/2) then
@@ -745,6 +800,20 @@ contains
              fsr_nir_d_ln(p) = albd(p,2)*forc_solad(t,2)
              fsds_vis_i_ln(p) = forc_solai(t,1)
              parveg_ln(p)     = parveg(p)
+        
+             if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1) then 
+                fsr_vis_d_ln_ice(c) = albd_ice(c,1)*forc_solad(t,1)
+                fsr_nir_d_ln_ice(c) = albd_ice(c,2)*forc_solad(t,2)
+                !write(iulog,*)"CAW c=",c,"forc_solad(t,1)=",forc_solad(t,1)
+                !write(iulog,*)"CAW c=",c,"forc_solad(t,2)=",forc_solad(t,2)
+                !write(iulog,*)"CAW c=",c,"albd_ice(c,1)=",albd_ice(c,1)
+                !write(iulog,*)"CAW c=",c,"albd_ice(c,2)=",albd_ice(c,2)
+                !write(iulog,*)"CAW c=",c,"fsr_nir_d_ln_ice=",fsr_nir_d_ln_ice(c)
+                !write(iulog,*)"CAW c=",c,"fsr_vis_d_ln_ice=",fsr_vis_d_ln_ice(c)
+             else
+                fsr_vis_d_ln_ice(c) = spval
+                fsr_nir_d_ln_ice(c) = spval
+             end if 
           else
              fsds_vis_d_ln(p) = spval
              fsds_nir_d_ln(p) = spval
@@ -752,6 +821,9 @@ contains
              fsr_nir_d_ln(p) = spval
              fsds_vis_i_ln(p) = spval
              parveg_ln(p)     = spval
+
+             fsr_vis_d_ln_ice(c) = spval
+             fsr_nir_d_ln_ice(c) = spval
           end if
 
           ! diagnostic variables (downwelling and absorbed radiation partitioning) for history files

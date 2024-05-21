@@ -152,7 +152,8 @@ contains
 
     namelist /elm_inparm/  &
          fsurdat, fatmtopo, flndtopo, &
-         paramfile, fsnowoptics, fsnowaging,fsoilordercon
+         paramfile, fsnowoptics, fsnowaging,fsoilordercon,&
+         ficephyprop !CAW
 
 
     ! History, restart options
@@ -280,7 +281,8 @@ contains
     namelist /elm_inparm/ &
          use_nofire, use_lch4, use_vertsoilc, use_extralakelayers, &
          use_vichydro, use_century_decomp, use_cn, use_crop, use_snicar_frc, &
-         use_snicar_ad, use_extrasnowlayers, use_vancouver, use_mexicocity, use_noio
+         use_snicar_ad, use_extrasnowlayers,&
+         use_snicar_lndice, use_vancouver, use_mexicocity, use_noio
 
     ! cpl_bypass variables
     namelist /elm_inparm/ metdata_type, metdata_bypass, metdata_biases, &
@@ -728,7 +730,8 @@ contains
     call mpi_bcast (use_crop, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_voc, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_snicar_frc, 1, MPI_LOGICAL, 0, mpicom, ier)
-    call mpi_bcast (use_snicar_ad, 1, MPI_LOGICAL, 0, mpicom, ier)
+    call mpi_bcast (use_snicar_ad, 1, MPI_LOGICAL, 0, mpicom, ier) 
+    call mpi_bcast (use_snicar_lndice, 1, MPI_LOGICAL, 0, mpicom, ier)!+CAW  
     call mpi_bcast (use_vancouver, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_mexicocity, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_noio, 1, MPI_LOGICAL, 0, mpicom, ier)
@@ -750,6 +753,7 @@ contains
     call mpi_bcast (fsoilordercon, len(fsoilordercon) , MPI_CHARACTER, 0, mpicom, ier)
     call mpi_bcast (fsnowoptics, len(fsnowoptics),  MPI_CHARACTER, 0, mpicom, ier)
     call mpi_bcast (fsnowaging,  len(fsnowaging),   MPI_CHARACTER, 0, mpicom, ier)
+    call mpi_bcast (ficephyprop, len(ficephyprop),  MPI_CHARACTER, 0, mpicom, ier) !+CAW
 
     ! Irrigation
     call mpi_bcast(irrigate, 1, MPI_LOGICAL, 0, mpicom, ier)
@@ -1031,6 +1035,7 @@ contains
     write(iulog,*) '    snow_shape = ', snow_shape
     write(iulog,*) '    snicar_atm_type = ', snicar_atm_type
     write(iulog,*) '    use_dust_snow_internal_mixing = ', use_dust_snow_internal_mixing
+    write(iulog,*) '    use_snicar_lndice = ', use_snicar_lndice
     write(iulog,*) '    use_vancouver = ', use_vancouver
     write(iulog,*) '    use_mexicocity = ', use_mexicocity
     write(iulog,*) '    use_noio = ', use_noio

@@ -207,7 +207,8 @@ contains
     real(r8) :: fn1(bounds%begc:bounds%endc,-nlevsno+1:nlevgrnd)            ! heat diffusion through the layer interface [W/m2]
     real(r8) :: dzm                                                         ! used in computing tridiagonal matrix
     real(r8) :: dzp                                                         ! used in computing tridiagonal matrix
-    real(r8) :: sabg_lyr_col(bounds%begc:bounds%endc,-nlevsno+1:1)          ! absorbed solar radiation (col,lyr) [W/m2]
+    real(r8) :: sabg_lyr_col(bounds%begc:bounds%endc,-nlevsno+1:1)          ! absorbed solar radiation (col,lyr) [W/m2] 
+    !real(r8) :: sabg_lyr_col(bounds%begc:bounds%endc,-nlevsno+1:15)                     !+ CAW extended to 15  
     real(r8) :: eflx_gnet_top                                               ! net energy flux into surface layer, pft-level [W/m2]
     real(r8) :: hs_top(bounds%begc:bounds%endc)                             ! net energy flux into surface layer (col) [W/m2]
     logical  :: cool_on(bounds%begl:bounds%endl)                            ! is urban air conditioning on?
@@ -746,7 +747,7 @@ contains
     integer                , intent(in)  :: jtop(bounds%begc: )                        ! top level at each column
     integer                , intent(in)  :: jbot(bounds%begc: )                        ! bottom level at each column
     logical                , intent(in)  :: urban_column                               ! Is true if solving temperature for urban column, otherwise false
-    real(r8)               , intent(out) :: tvector( bounds%begc: , -nlevsno: )        ! Numerical solution of temperature
+    real(r8)               , intent(inout) :: tvector( bounds%begc: , -nlevsno: )        ! Numerical solution of temperature
     !
     ! !LOCAL VARIABLES:
     integer            :: c, fc, j
@@ -1280,7 +1281,7 @@ contains
     use elm_varctl       , only : iulog
     use elm_varcon       , only : tfrz, hfus, grav
     use column_varcon    , only : icol_roof, icol_sunwall, icol_shadewall, icol_road_perv
-    use landunit_varcon  , only : istsoil, istcrop, istice_mec
+    use landunit_varcon  , only : istsoil, istcrop, istice_mec, istice
     !
     ! !ARGUMENTS:
     type(bounds_type)      , intent(in)    :: bounds
@@ -1607,7 +1608,7 @@ contains
             ! as computed in HydrologyDrainageMod.F90.
 
             l = col_pp%landunit(c)
-            if (lun_pp%itype(l)==istice_mec) then
+            if ( (lun_pp%itype(l)==istice) .or. (lun_pp%itype(l)==istice_mec) ) then
 
                if (j>=1 .and. h2osoi_liq(c,j) > 0._r8) then   ! ice layer with meltwater
                   ! melting corresponds to a negative ice flux
@@ -1848,6 +1849,7 @@ contains
 
       ! Initialize:
       sabg_lyr_col(begc:endc,-nlevsno+1:1) = 0._r8
+      !sabg_lyr_col(begc:endc,-nlevsno+1:15) = 0._r8 ! +CAW
       hs_top(begc:endc)                    = 0._r8
       hs_top_snow(begc:endc)               = 0._r8
 
@@ -1876,7 +1878,8 @@ contains
 
                      hs_top_snow(c) = hs_top_snow(c) + eflx_gnet_snow*veg_pp%wtcol(p)
 
-                     do j = lyr_top,1,1
+                      do j = lyr_top,1,1
+                      !do j = lyr_top,1,15 !+CAW
                         sabg_lyr_col(c,j) = sabg_lyr_col(c,j) + sabg_lyr(p,j) * veg_pp%wtcol(p)
                      enddo
                   else
@@ -4748,6 +4751,7 @@ contains
     integer                , intent(in)    :: num_filter                                         ! number of columns in the filter
     integer                , intent(in)    :: filter(:)                                          ! column filter
     real(r8)               , intent(in)    :: sabg_lyr(bounds%begc:bounds%endc,-nlevsno+1:1)     ! absorbed solar radiation (col,lyr) [W/m2]
+    !real(r8)               , intent(in)    :: sabg_lyr(bounds%begc:bounds%endc,-nlevsno+1:15)    ! +CAW
     real(r8)               , intent(in)    :: dhsdT(bounds%begc:bounds%endc)                     ! temperature derivative of "hs" [col]
     real(r8)               , intent(in)    :: hs_soil(bounds%begc:bounds%endc)                   ! heat flux on soil [W/m2]
     real(r8)               , intent(in)    :: hs_top_snow(bounds%begc:bounds%endc)               ! heat flux on top snow layer [W/m2]
@@ -4767,6 +4771,7 @@ contains
 
       do c = bounds%begc, bounds%endc
          do j = -nlevsno+1, 1
+         !do j = -nlevsno+1, 15 !+CAW
             eflx_sabg_lyr(c,j)  = sabg_lyr(c,j)
          enddo
 

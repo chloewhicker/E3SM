@@ -221,9 +221,7 @@ module elm_varcon
   ! minimum allowed snow effective radius (also "fresh snow" value) [microns]
   real(r8), public, parameter :: snw_rds_min = 54.526_r8    
   !-----------------------------------------------------------------------
-
-contains
-
+contains 
   !------------------------------------------------------------------------------
   subroutine elm_varcon_init()
     !
@@ -249,7 +247,7 @@ contains
     allocate( dzsoifl(1:nlevsoifl            ))
 
     if (use_extrasnowlayers) then
-       h2osno_max = 30000._r8
+        h2osno_max = 30000._r8 !(mm H2O)
     end if
 
   end subroutine elm_varcon_init
