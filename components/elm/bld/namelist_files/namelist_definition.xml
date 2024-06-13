@@ -719,6 +719,11 @@ snowpack conditions on glaciers and ice sheets, including a semi-empirical
 firn densification model.
 </entry>
 
+<entry id="use_snow_thk" type="logical" category="physics"
+	group="elm_inparm" valid_values="" value=".false.">
+Toggle to use new snow thermal conductivity that relies on snow temperature and density. 
+</entry>
+
 <entry id="use_noio" type="logical" category="default_settings"
        group="elm_inparm" valid_values="" value=".false." >
 Toggle to turn all history output completely OFF (possibly used for testing)
