@@ -287,7 +287,7 @@ contains
          use_vichydro, use_century_decomp, use_cn, use_crop, use_snicar_frc, &
          use_snicar_ad, use_firn_percolation_and_compaction, use_extrasnowlayers,&
          use_T_rho_dependent_snowthk, use_vancouver, use_mexicocity, use_noio,&
-         use_snicar_lndice
+         use_snicar_lndice, use_snicar_lndice_varying
 
     ! cpl_bypass variables
     namelist /elm_inparm/ metdata_type, metdata_bypass, metdata_biases, &
@@ -738,7 +738,8 @@ contains
     call mpi_bcast (use_voc, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_snicar_frc, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_snicar_ad, 1, MPI_LOGICAL, 0, mpicom, ier) 
-    call mpi_bcast (use_snicar_lndice, 1, MPI_LOGICAL, 0, mpicom, ier)!+CAW  
+    call mpi_bcast (use_snicar_lndice, 1, MPI_LOGICAL, 0, mpicom, ier)  
+    call mpi_bcast (use_snicar_lndice_varying, 1, MPI_LOGICAL, 0, mpicom, ier) 
     call mpi_bcast (use_vancouver, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_mexicocity, 1, MPI_LOGICAL, 0, mpicom, ier)
     call mpi_bcast (use_noio, 1, MPI_LOGICAL, 0, mpicom, ier)
@@ -1049,6 +1050,7 @@ contains
     write(iulog,*) '    snicar_atm_type = ', snicar_atm_type
     write(iulog,*) '    use_dust_snow_internal_mixing = ', use_dust_snow_internal_mixing
     write(iulog,*) '    use_snicar_lndice = ', use_snicar_lndice
+    write(iulog,*) '    use_snicar_lndice_varying = ', use_snicar_lndice_varying
     write(iulog,*) '    use_vancouver = ', use_vancouver
     write(iulog,*) '    use_mexicocity = ', use_mexicocity
     write(iulog,*) '    use_noio = ', use_noio

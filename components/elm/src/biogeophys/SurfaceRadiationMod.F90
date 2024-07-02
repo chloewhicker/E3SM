@@ -61,12 +61,19 @@ module SurfaceRadiationMod
      real(r8), pointer  :: fsds_sno_nd_patch     (:) => null() ! patch incident near-IR, direct radiation on snow  (for history files)  [W/m2]
      real(r8), pointer  :: fsds_sno_vi_patch     (:) => null() ! patch incident visible, diffuse radiation on snow (for history files) [W/m2]
      real(r8), pointer  :: fsds_sno_ni_patch     (:) => null() ! patch incident near-IR, diffuse radiation on snow (for history files) [W/m2]
+     
+     real(r8), pointer  :: fsds_ice_vd_patch     (:) => null() ! patch incident visible, direct radiation on snow  (for history files)  [W/m2]
+     real(r8), pointer  :: fsds_ice_nd_patch     (:) => null() ! patch incident near-IR, direct radiation on snow  (for history files)  [W/m2]
+     real(r8), pointer  :: fsds_ice_vi_patch     (:) => null() ! patch incident visible, diffuse radiation on snow (for history files) [W/m2]
+     real(r8), pointer  :: fsds_ice_ni_patch     (:) => null() ! patch incident near-IR, diffuse radiation on snow (for history files) [W/m2]
 
      real(r8), pointer  :: fsds_vis_d_patch      (:) => null() ! patch incident direct beam vis solar radiation (W/m**2)
      real(r8), pointer  :: fsds_vis_i_patch      (:) => null() ! patch incident diffuse vis solar radiation (W/m**2)
      real(r8), pointer  :: fsds_vis_d_ln_patch   (:) => null() ! patch incident direct beam vis solar radiation at local noon (W/m**2)
      real(r8), pointer  :: fsds_vis_i_ln_patch   (:) => null() ! patch incident diffuse beam vis solar radiation at local noon (W/m**2)
-
+     
+     real(r8), pointer  :: fsds_vis_d_ln_ice_patch   (:) => null() ! patch incident direct beam vis solar radiation at local noon ICE (W/m**2)
+     real(r8), pointer  :: fsds_nir_d_ln_ice_patch   (:) => null() ! patch incident direct beam nir solar radiation at local noon ICE (W/m**2)
    contains
 
      procedure, public  :: Init
@@ -136,6 +143,13 @@ contains
     allocate(this%fsds_sno_vi_patch     (begp:endp))              ; this%fsds_sno_vi_patch     (:)   = spval
     allocate(this%fsds_sno_ni_patch     (begp:endp))              ; this%fsds_sno_ni_patch     (:)   = spval
 
+    allocate(this%fsds_ice_vd_patch     (begp:endp))              ; this%fsds_ice_vd_patch     (:)   = spval
+    allocate(this%fsds_ice_nd_patch     (begp:endp))              ; this%fsds_ice_nd_patch     (:)   = spval
+    allocate(this%fsds_ice_vi_patch     (begp:endp))              ; this%fsds_ice_vi_patch     (:)   = spval
+    allocate(this%fsds_ice_ni_patch     (begp:endp))              ; this%fsds_ice_ni_patch     (:)   = spval
+
+    allocate(this%fsds_vis_d_ln_ice_patch   (begp:endp))              ; this%fsds_vis_d_ln_ice_patch   (:)   = spval
+    allocate(this%fsds_nir_d_ln_ice_patch   (begp:endp))              ; this%fsds_nir_d_ln_ice_patch   (:)   = spval
   end subroutine InitAllocate
 
   !-----------------------------------------------------------------------
@@ -228,6 +242,18 @@ contains
          avgflag='A', long_name='direct vis incident solar radiation at local noon', &
          ptr_patch=this%fsds_vis_d_ln_patch)
 
+     this%fsds_vis_d_ln_ice_patch(begp:endp) = spval
+    call hist_addfld1d (fname='FSDSVDLN_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct vis incident solar radiation at local noon ICE', &
+         ptr_patch=this%fsds_vis_d_ln_ice_patch)
+
+     this%fsds_nir_d_ln_ice_patch(begp:endp) = spval
+    call hist_addfld1d (fname='FSDSNDLN_ICE', units='W/m^2',  &
+         avgflag='A', long_name='direct nir incident solar radiation at local noon ICE', &
+         ptr_patch=this%fsds_nir_d_ln_ice_patch)
+    
+ 
+ 
     this%fsds_vis_i_ln_patch(begp:endp) = spval
     call hist_addfld1d (fname='FSDSVILN', units='W/m^2',  &
          avgflag='A', long_name='diffuse vis incident solar radiation at local noon', &
@@ -242,6 +268,28 @@ contains
     call hist_addfld1d (fname='FSRVDLN', units='W/m^2',  &
          avgflag='A', long_name='direct vis reflected solar radiation at local noon', &
          ptr_patch=this%fsr_vis_d_ln_patch, c2l_scale_type='urbanf')
+
+
+    this%fsds_ice_vd_patch(begp:endp) = spval
+    call hist_addfld1d (fname='ICEFSDSVD', units='W/m^2',  &      
+         avgflag='A', long_name='direct vis incident solar radiation on ice', &
+         ptr_patch=this%fsds_ice_vd_patch, default='inactive')    
+
+    this%fsds_ice_nd_patch(begp:endp) = spval
+    call hist_addfld1d (fname='ICEFSDSND', units='W/m^2',  &      
+         avgflag='A', long_name='direct nir incident solar radiation on ice', &
+         ptr_patch=this%fsds_ice_nd_patch, default='inactive')    
+  
+    this%fsds_ice_vi_patch(begp:endp) = spval
+    call hist_addfld1d (fname='ICEFSDSVI', units='W/m^2',  &
+         avgflag='A', long_name='diffuse vis incident solar radiation on ice', &
+         ptr_patch=this%fsds_ice_vi_patch, default='inactive')
+    
+    this%fsds_ice_ni_patch(begp:endp) = spval
+    call hist_addfld1d (fname='ICEFSDSNI', units='W/m^2',  &
+         avgflag='A', long_name='diffuse nir incident solar radiation on ice', &
+         ptr_patch=this%fsds_ice_ni_patch, default='inactive')
+
 
     this%fsds_sno_vd_patch(begp:endp) = spval
     call hist_addfld1d (fname='SNOFSDSVD', units='W/m^2',  &
@@ -479,7 +527,13 @@ contains
           fsds_sno_vd     =>    surfrad_vars%fsds_sno_vd_patch    , & ! Output: [real(r8) (:)   ] incident visible, direct radiation on snow (for history files) (pft) [W/m2]
           fsds_sno_nd     =>    surfrad_vars%fsds_sno_nd_patch    , & ! Output: [real(r8) (:)   ] incident near-IR, direct radiation on snow (for history files) (pft) [W/m2]
           fsds_sno_vi     =>    surfrad_vars%fsds_sno_vi_patch    , & ! Output: [real(r8) (:)   ] incident visible, diffuse radiation on snow (for history files) (pft) [W/m2]
-          fsds_sno_ni     =>    surfrad_vars%fsds_sno_ni_patch      & ! Output: [real(r8) (:)   ] incident near-IR, diffuse radiation on snow (for history files) (pft) [W/m2]
+          fsds_sno_ni     =>    surfrad_vars%fsds_sno_ni_patch    , & ! Output: [real(r8) (:)   ] incident near-IR, diffuse radiation on snow (for history files) (pft) [W/m2]
+          fsds_ice_vd     =>    surfrad_vars%fsds_ice_vd_patch    , & ! Output: [real(r8) (:)   ] incident visible, direct radiation on snow (for history files) (pft) [W/m2]
+          fsds_ice_nd     =>    surfrad_vars%fsds_ice_nd_patch    , & ! Output: [real(r8) (:)   ] incident near-IR, direct radiation on snow (for history files) (pft) [W/m2]
+          fsds_ice_vi     =>    surfrad_vars%fsds_ice_vi_patch    , & ! Output: [real(r8) (:)   ] incident visible, diffuse radiation on snow (for history files) (pft) [W/m2]
+          fsds_ice_ni     =>    surfrad_vars%fsds_ice_ni_patch    , & ! Output: [real(r8) (:)   ] incident near-IR, diffuse radiation on snow (for history files) (pft) [W/m2]
+          fsds_vis_d_ln_ice =>  surfrad_vars%fsds_vis_d_ln_ice_patch    , & ! Output: [real(r8) (:)   ] incident direct beam vis solar rad at local noon on ICE (W/m**2)
+          fsds_nir_d_ln_ice =>  surfrad_vars%fsds_nir_d_ln_ice_patch      & ! Output: [real(r8) (:)   ] incident direct beam vis solar rad at local noon on ICE (W/m**2)
           )
 
           dtime = dtime_mod
@@ -780,15 +834,25 @@ contains
           fsr_nir_i(p)  = albi(p,2)*forc_solai(t,2)
 
           if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1) then
-                fsr_vis_d_ice(c) = albd_ice(c,1)*forc_solad(t,1)
-                fsr_nir_d_ice(c) = albd_ice(c,2)*forc_solad(t,2)
-                fsr_vis_i_ice(c) = albi_ice(c,1)*forc_solai(t,1)
-                fsr_nir_i_ice(c) = albi_ice(c,2)*forc_solai(t,2)
+                fsds_ice_vd(p) = forc_solad(t,1)
+                fsds_ice_nd(p) = forc_solad(t,2)
+                fsds_ice_vi(p) = forc_solai(t,1)
+                fsds_ice_ni(p) = forc_solai(t,2)
+
+                fsr_vis_d_ice(p) = albd_ice(c,1)*fsds_ice_vd(p)
+                fsr_nir_d_ice(p) = albd_ice(c,2)*fsds_ice_nd(p)
+                fsr_vis_i_ice(p) = albi_ice(c,1)*fsds_ice_vi(p)
+                fsr_nir_i_ice(p) = albi_ice(c,2)*fsds_ice_ni(p)
           else
-                fsr_vis_d_ice(c) = spval
-                fsr_nir_d_ice(c) = spval
-                fsr_vis_i_ice(c) = spval
-                fsr_nir_i_ice(c) = spval
+                fsds_ice_vd(p) = spval
+                fsds_ice_nd(p) = spval
+                fsds_ice_vi(p) = spval
+                fsds_ice_ni(p) = spval
+
+                fsr_vis_d_ice(p) = spval
+                fsr_nir_d_ice(p) = spval
+                fsr_vis_i_ice(p) = spval
+                fsr_nir_i_ice(p) = spval
           end if
 
           local_secp1 = secs + nint((grc_pp%londeg(g)/degpsec)/dtime)*dtime
@@ -801,9 +865,12 @@ contains
              fsds_vis_i_ln(p) = forc_solai(t,1)
              parveg_ln(p)     = parveg(p)
         
-             if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1) then 
-                fsr_vis_d_ln_ice(c) = albd_ice(c,1)*forc_solad(t,1)
-                fsr_nir_d_ln_ice(c) = albd_ice(c,2)*forc_solad(t,2)
+             if ((lun_pp%itype(l)==istice_mec .or. lun_pp%itype(l)==istice) .and. albd_ice(c,1)<1 .and. albd_ice(c,2)<1) then 
+                fsds_vis_d_ln_ice(p) = forc_solad(t,1)
+                fsds_nir_d_ln_ice(p) = forc_solad(t,2)
+
+                fsr_vis_d_ln_ice(p) = fsds_vis_d_ln_ice(p)*albd_ice(c,1)
+                fsr_nir_d_ln_ice(p) = fsds_nir_d_ln_ice(p)*albd_ice(c,2)
                 !write(iulog,*)"CAW c=",c,"forc_solad(t,1)=",forc_solad(t,1)
                 !write(iulog,*)"CAW c=",c,"forc_solad(t,2)=",forc_solad(t,2)
                 !write(iulog,*)"CAW c=",c,"albd_ice(c,1)=",albd_ice(c,1)
@@ -811,8 +878,11 @@ contains
                 !write(iulog,*)"CAW c=",c,"fsr_nir_d_ln_ice=",fsr_nir_d_ln_ice(c)
                 !write(iulog,*)"CAW c=",c,"fsr_vis_d_ln_ice=",fsr_vis_d_ln_ice(c)
              else
-                fsr_vis_d_ln_ice(c) = spval
-                fsr_nir_d_ln_ice(c) = spval
+                fsds_vis_d_ln_ice(p) = spval
+                fsds_nir_d_ln_ice(p) = spval
+
+                fsr_vis_d_ln_ice(p) = spval
+                fsr_nir_d_ln_ice(p) = spval
              end if 
           else
              fsds_vis_d_ln(p) = spval
@@ -822,8 +892,12 @@ contains
              fsds_vis_i_ln(p) = spval
              parveg_ln(p)     = spval
 
-             fsr_vis_d_ln_ice(c) = spval
-             fsr_nir_d_ln_ice(c) = spval
+             fsr_vis_d_ln_ice(p) = spval
+             fsr_nir_d_ln_ice(p) = spval
+
+             fsds_vis_d_ln_ice(p) = spval
+             fsds_nir_d_ln_ice(p) = spval
+
           end if
 
           ! diagnostic variables (downwelling and absorbed radiation partitioning) for history files

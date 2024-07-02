@@ -831,6 +831,7 @@ sub setup_cmdl_fates_mode {
                      "use_century_decomp",
                      "use_snicar_ad",
 		     "use_snicar_lndice",
+		     "use_snicar_lndice_varying",
                      "use_vertsoilc");
       foreach my $var ( @list ) {
 	  if ( defined($nl->get_value($var))  ) {
@@ -2524,7 +2525,8 @@ sub setup_logic_demand {
   $settings{'use_century_decomp'}  = $nl_flags->{'use_century_decomp'};
   $settings{'use_crop'}            = $nl_flags->{'use_crop'};
   $settings{'use_modified_infil'}  = $nl_flags->{'use_modified_infil'};
-  
+  $settings{'use_snicar_lndice_varying'}   = $nl_flags->{'use_snicar_lndice_varying'};
+
   my $demand = $nl->get_value('clm_demand');
   if (defined($demand)) {
     $demand =~ s/\'//g;   # Remove quotes
