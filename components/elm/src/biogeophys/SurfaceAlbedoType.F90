@@ -286,14 +286,14 @@ contains
     allocate(this%albd_ice           (begc:endc,numrad))       ; this%albd_ice           (:,:) =spval !+CAW
     allocate(this%albi_ice           (begc:endc,numrad))       ; this%albi_ice           (:,:) =spval !+CAW
     
-    allocate(this%fsr_vis_d_ln_ice_col    (begc:endc))              ; this%fsr_vis_d_ln_ice_col    (:)   = spval
-    allocate(this%fsr_nir_d_ln_ice_col    (begc:endc))              ; this%fsr_nir_d_ln_ice_col    (:)   = spval
+    allocate(this%fsr_vis_d_ln_ice_col    (begp:endp))              ; this%fsr_vis_d_ln_ice_col    (:)   = spval
+    allocate(this%fsr_nir_d_ln_ice_col    (begp:endp))              ; this%fsr_nir_d_ln_ice_col    (:)   = spval
     
-    allocate(this%fsr_vis_d_ice_col    (begc:endc))              ; this%fsr_vis_d_ice_col    (:)   = spval
-    allocate(this%fsr_nir_d_ice_col    (begc:endc))              ; this%fsr_nir_d_ice_col    (:)   = spval
+    allocate(this%fsr_vis_d_ice_col    (begp:endp))              ; this%fsr_vis_d_ice_col    (:)   = spval
+    allocate(this%fsr_nir_d_ice_col    (begp:endp))              ; this%fsr_nir_d_ice_col    (:)   = spval
     
-    allocate(this%fsr_vis_i_ice_col    (begc:endc))              ; this%fsr_vis_i_ice_col    (:)   = spval
-    allocate(this%fsr_nir_i_ice_col    (begc:endc))              ; this%fsr_nir_i_ice_col    (:)   = spval
+    allocate(this%fsr_vis_i_ice_col    (begp:endp))              ; this%fsr_vis_i_ice_col    (:)   = spval
+    allocate(this%fsr_nir_i_ice_col    (begp:endp))              ; this%fsr_nir_i_ice_col    (:)   = spval
     allocate(this%bare_ice_flg         (begc:endc))              ; this%bare_ice_flg         (:)   = spval !+CAW
 
     allocate(this%fd_top_adjust      (begp:endp,numrad))       ; this%fd_top_adjust      (:,:) =1._r8
@@ -394,35 +394,35 @@ contains
          avgflag='A', long_name='surface albedo of ice (indirect)', &
          ptr_col=this%albi_ice, default='inactive', c2l_scale_type='urbanf')
 
-    this%fsr_nir_d_ln_ice_col(begc:endc) = spval  ! +CAW
+    this%fsr_nir_d_ln_ice_col(begp:endp) = spval  ! +CAW
     call hist_addfld1d (fname='FSRNDLN_ICE', units='W/m^2',  &
          avgflag='A', long_name='direct nir reflected solar radiation at local noon over lnd ice', &
-         ptr_col=this%fsr_nir_d_ln_ice_col, default='inactive')
+         ptr_patch=this%fsr_nir_d_ln_ice_col, default='inactive')
 
-    this%fsr_vis_d_ln_ice_col(begc:endc) = spval  ! +CAW
+    this%fsr_vis_d_ln_ice_col(begp:endp) = spval  ! +CAW
     call hist_addfld1d (fname='FSRVDLN_ICE', units='W/m^2',  &
          avgflag='A', long_name='direct vis reflected solar radiation at local noon over lnd ice', &
-         ptr_col=this%fsr_vis_d_ln_ice_col, default='inactive')
+         ptr_patch=this%fsr_vis_d_ln_ice_col, default='inactive')
 
-    this%fsr_nir_d_ice_col(begc:endc) = spval  ! +CAW
+    this%fsr_nir_d_ice_col(begp:endp) = spval  ! +CAW
     call hist_addfld1d (fname='FSRND_ICE', units='W/m^2',  &
          avgflag='A', long_name='direct nir reflected solar radiation over lnd ice', &
-         ptr_col=this%fsr_nir_d_ice_col, default='inactive')
+         ptr_patch=this%fsr_nir_d_ice_col, default='inactive')
 
-    this%fsr_vis_d_ice_col(begc:endc) = spval  ! +CAW
+    this%fsr_vis_d_ice_col(begp:endp) = spval  ! +CAW
     call hist_addfld1d (fname='FSRVD_ICE', units='W/m^2',  &
          avgflag='A', long_name='direct vis reflected solar radiation over lnd ice', &
-         ptr_col=this%fsr_vis_d_ice_col, default='inactive')
+         ptr_patch=this%fsr_vis_d_ice_col, default='inactive')
 
-    this%fsr_nir_i_ice_col(begc:endc) = spval  ! +CAW
+    this%fsr_nir_i_ice_col(begp:endp) = spval  ! +CAW
     call hist_addfld1d (fname='FSRNI_ICE', units='W/m^2',  &
          avgflag='A', long_name='diffuse nir reflected solar radiation over lnd ice', &
-         ptr_col=this%fsr_nir_i_ice_col, default='inactive')
+         ptr_patch=this%fsr_nir_i_ice_col, default='inactive')
 
-    this%fsr_vis_i_ice_col(begc:endc) = spval  ! +CAW
+    this%fsr_vis_i_ice_col(begp:endp) = spval  ! +CAW
     call hist_addfld1d (fname='FSRVI_ICE', units='W/m^2',  &
          avgflag='A', long_name='diffuse vis reflected solar radiation over lnd ice', &
-         ptr_col=this%fsr_vis_i_ice_col, default='inactive')
+         ptr_patch=this%fsr_vis_i_ice_col, default='inactive')
    
     this%bare_ice_flg(begc:endc) = spval
     call hist_addfld1d (fname='BARE_ICE_FLG', units='unitless', &
