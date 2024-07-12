@@ -244,7 +244,7 @@ contains
 
          if (lun_pp%itype(l)==istwet .or. lun_pp%itype(l)==istice      &
                                   .or. lun_pp%itype(l)==istice_mec) then
-
+            
             qflx_drain(c)         = 0._r8
             qflx_drain_perched(c) = 0._r8
             qflx_h2osfc_surf(c)   = 0._r8

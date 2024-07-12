@@ -1645,12 +1645,11 @@ contains
 
             l = col_pp%landunit(c)
             if ( (lun_pp%itype(l)==istice) .or. (lun_pp%itype(l)==istice_mec) ) then
-
+                !write (iulog,*) "CAW lun_pp%itype(l)==istice",lun_pp%itype(l)==istice
                if (j>=1 .and. h2osoi_liq(c,j) > 0._r8) then   ! ice layer with meltwater
                   ! melting corresponds to a negative ice flux
                   qflx_glcice_melt(c) = qflx_glcice_melt(c) + h2osoi_liq(c,j)/dtime
                   qflx_glcice(c) = qflx_glcice(c) - h2osoi_liq(c,j)/dtime
-
                   ! convert layer back to pure ice by "borrowing" ice from below the column
                   h2osoi_ice(c,j) = h2osoi_ice(c,j) + h2osoi_liq(c,j)
                   h2osoi_liq(c,j) = 0._r8
