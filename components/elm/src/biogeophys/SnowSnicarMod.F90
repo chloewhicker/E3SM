@@ -2449,11 +2449,11 @@ contains
                          grc_ws%bare_ice_abr(g_idx)  = bbl_eff_rad_wgted
                          grc_ws%bare_ice_bccnc(g_idx)= ice_bc_conc_wgted
                  else
-                         ice_bc_conc_wgted = 240_r8
+                         ice_bc_conc_wgted = 202_r8
                          ice_bc_conc_wgted = ice_bc_conc_wgted*1.e-09_r8 ! convert from ng/g -> kg/kg
 
-                         ice_density_wgted = 753_r8 
-                         bbl_eff_rad_wgted = 436_r8
+                         ice_density_wgted = 793_r8 
+                         bbl_eff_rad_wgted = 612_r8
                          grc_ws%bare_ice_dens(g_idx) = ice_density_wgted
                          grc_ws%bare_ice_abr(g_idx)  = bbl_eff_rad_wgted
                          grc_ws%bare_ice_bccnc(g_idx)= ice_bc_conc_wgted 
