@@ -538,16 +538,6 @@ contains
          long_name='surface albedo (diffuse) (0 to 1)', units='', &
          interpinic_flag='interp', readvar=readvar, data=this%albi_patch)
 
-  !  call restartvar(ncid=ncid, flag=flag, varname='albd_ice', xtype=ncd_double,  &
-  !       dim1name='pft', dim2name='numrad', switchdim=.true., &
-  !       long_name='ice surface albedo (direct) (0 to 1)', units='', &
-  !       interpinic_flag='interp', readvar=readvar, data=this%albd_ice)
-
-   ! call restartvar(ncid=ncid, flag=flag, varname='albi_ice', xtype=ncd_double,  &
-   !      dim1name='pft', dim2name='numrad', switchdim=.true., &
-   !      long_name='ice surface albedo (diffuse) (0 to 1)', units='', &
-   !      interpinic_flag='interp', readvar=readvar, data=this%albi_ice)
-     
     call restartvar(ncid=ncid, flag=flag, varname='albgrd', xtype=ncd_double,  &
          dim1name='column', dim2name='numrad', switchdim=.true., &
          long_name='ground albedo (direct) (0 to 1)', units='', &

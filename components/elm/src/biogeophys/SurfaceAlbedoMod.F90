@@ -240,9 +240,6 @@ contains
           fabi_sha_z    =>    surfalb_vars%fabi_sha_z_patch       , & ! Output:  [real(r8) (:,:) ]  absorbed shaded leaf diffuse PAR (per unit lai+sai) for each canopy layer
           albd_ice      =>    surfalb_vars%albd_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (direct)
           albi_ice      =>    surfalb_vars%albi_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
-         ! )
-         ! albd_ice      =>    surfalb_vars%albd_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (direct)
-         ! albi_ice      =>    surfalb_vars%albi_ice               , & ! Output:  [real(r8) (:,:) ]  ice surface albedo (diffuse)
           bare_ice_flg  =>    surfalb_vars%bare_ice_flg             & ! Output: 
           )
     ! Cosine solar zenith angle for next time step
